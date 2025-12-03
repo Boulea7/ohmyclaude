@@ -14,8 +14,8 @@ version: "1.0.0"
 model: sonnet
 always_thinking_enabled: true
 
-# CLAUDE.md template selection
-claude_md_template: general  # Can be: general, frontend, backend, ml
+# CLAUDE.md template selection (includes SuperClaude + CodexMCP)
+claude_md_template: full  # Can be: general, standard, full, frontend, backend, ml
 
 # MCP packages to install
 mcp_packages:
