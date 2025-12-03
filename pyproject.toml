@@ -1,0 +1,92 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ohmyclaude"
+version = "1.0.0"
+description = "Claude Code 一键配置工具 - One-click configuration tool for Claude Code"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "OhMyClaude Team" }
+]
+keywords = ["claude", "claude-code", "config", "cli", "anthropic"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    # CLI framework
+    "click>=8.0.0",
+    "rich>=13.0.0",
+    "InquirerPy>=0.3.4",
+
+    # Configuration management
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "ruamel.yaml>=0.18.0",
+    "jinja2>=3.0.0",
+    "deepmerge>=1.1.0",
+
+    # Security and credentials
+    "keyring>=24.0.0",
+    "cryptography>=41.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pre-commit>=3.0.0",
+]
+
+[project.scripts]
+ohmyclaude = "ohmyclaude.cli.main:cli"
+omc = "ohmyclaude.cli.main:cli"
+
+[project.urls]
+Homepage = "https://github.com/ohmyclaude/ohmyclaude"
+Documentation = "https://ohmyclaude.dev/docs"
+Repository = "https://github.com/ohmyclaude/ohmyclaude"
+Issues = "https://github.com/ohmyclaude/ohmyclaude/issues"
+
+# Ruff configuration
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=ohmyclaude --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src/ohmyclaude"]
+branch = true
+
+# Hatchling configuration
+[tool.hatch.build.targets.wheel]
+packages = ["src/ohmyclaude"]

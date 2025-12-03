@@ -1,0 +1,227 @@
+# OhMyClaude Preset: Full
+# Description: Complete configuration with all features for professional developers
+# Target: Professional developers, teams, Max subscribers, enterprise use
+# Token overhead: ~8,800+ tokens (~6% of 200K context)
+
+name: full
+description: |
+  完整配置 - 专业开发者/团队使用
+  Full preset with all features for professional developers and teams
+
+version: "1.0.0"
+
+# Model configuration
+model: sonnet
+always_thinking_enabled: true
+
+# CLAUDE.md template selection
+claude_md_template: general  # Can be: general, frontend, backend, ml
+
+# MCP packages to install
+mcp_packages:
+  - basic     # filesystem + context7
+  - web       # web-reader + web-search-prime
+  - advanced  # zai-mcp-server + unified-diff
+
+# MCP server details
+mcp_servers:
+  filesystem:
+    enabled: true
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@anthropic-ai/mcp-server-filesystem"
+    description: File system operations
+    estimated_tokens: 2500
+
+  context7:
+    enabled: true
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@upstash/context7-mcp"
+    description: Documentation lookup
+    estimated_tokens: 800
+
+  web-reader:
+    enabled: true
+    transport: sse
+    url: "https://mcp.api-inference.glm.ai/mcp/sse"
+    env:
+      Z_AI_KEY: "${GLM_API_KEY}"
+    description: Web page reading
+    estimated_tokens: 400
+
+  web-search-prime:
+    enabled: true
+    transport: sse
+    url: "https://mcp.api-inference.glm.ai/mcp/sse"
+    env:
+      Z_AI_KEY: "${GLM_API_KEY}"
+    description: Web search
+    estimated_tokens: 500
+
+  zai-mcp-server:
+    enabled: true
+    transport: sse
+    url: "https://mcp.api-inference.glm.ai/mcp/sse"
+    env:
+      Z_AI_KEY: "${GLM_API_KEY}"
+    description: Image and video analysis
+    estimated_tokens: 600
+
+  unified-diff:
+    enabled: true
+    transport: stdio
+    command: bun
+    args:
+      - "run"
+      - "${OHMYCLAUDE_ROOT}/mcp/unified-diff/index.ts"
+    description: Diff visualization
+    estimated_tokens: 500
+
+# Slash commands to install
+commands:
+  - commit              # Smart Git commit with Conventional Commits
+  - review              # Code review with AI
+  - test                # Run tests and analyze failures
+  - codex               # Delegate task to Codex CLI
+  - dev-docs            # Dev docs workflow (from showcase)
+  - update-docs         # Update documentation
+  - strategic-planning  # Strategic planning workflow
+
+# Agent templates to install
+# Includes all agents from both SuperClaude and showcase
+agents:
+  # Core agents
+  - code-reviewer           # Code review specialist
+  - debugger                # Debugging assistant
+  - test-engineer           # Test automation expert
+  - refactor-expert         # Refactoring specialist
+  - doc-writer              # Technical documentation
+
+  # Professional agents (from showcase)
+  - code-architecture-reviewer  # Architecture review
+  - auto-error-resolver         # Automatic error resolution
+  - refactor-planner            # Refactoring planning
+  - documentation-architect     # Documentation architecture
+  - plan-reviewer               # Plan review and validation
+
+# Hooks preset
+hooks_preset: full
+
+# Hooks configuration (complete set)
+hooks:
+  SessionStart:
+    - type: command
+      command: 'echo "Branch: $(git branch --show-current 2>/dev/null || echo \"not a git repo\")"'
+      timeout: 5000
+      description: Show current Git branch
+    - type: command
+      command: 'for f in package.json Cargo.toml pyproject.toml go.mod; do [ -f $f ] && echo "Project: $f" && break; done'
+      timeout: 5000
+      description: Detect project type
+
+  UserPromptSubmit:
+    - type: command
+      command: "npx tsx ${OHMYCLAUDE_ROOT}/hooks/skill-activation-prompt.ts"
+      timeout: 5000
+      description: Skill auto-activation based on prompt keywords
+
+  PostToolUse:
+    - matcher: "Edit|Write|MultiEdit"
+      hooks:
+        - type: command
+          command: 'echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Edited: $TOOL_INPUT" >> ~/.claude/edit_history.log'
+          timeout: 2000
+          description: Log file edits
+        - type: command
+          command: "bash ${OHMYCLAUDE_ROOT}/hooks/post-tool-use-tracker.sh"
+          timeout: 3000
+          description: Track edited files for build checks
+        - type: command
+          command: "bash ${OHMYCLAUDE_ROOT}/hooks/tsc-check.sh"
+          timeout: 30000
+          description: TypeScript compilation check
+
+  Stop:
+    - type: command
+      command: "bash ${OHMYCLAUDE_ROOT}/hooks/stop-build-check-enhanced.sh"
+      timeout: 60000
+      description: Build verification after session
+
+  Notification:
+    - type: command
+      command: 'osascript -e ''display notification "$MESSAGE" with title "Claude Code" sound name "Glass"'''
+      timeout: 5000
+      description: macOS notification
+
+# CodexMCP integration
+include_codex: true
+
+# CodexMCP configuration
+codex:
+  enabled: true
+  collaboration_protocol: true
+  default_sandbox: read-only
+  session_management: true
+  return_all_messages: false
+
+# Skills auto-activation (from showcase)
+skills:
+  - frontend-dev-guidelines
+  - backend-dev-guidelines
+  - skill-developer
+  - route-tester
+  - error-tracking
+
+# Skill rules configuration
+skill_rules:
+  frontend-dev-guidelines:
+    type: guardrail
+    enforcement: suggest
+    priority: high
+    prompt_triggers:
+      keywords:
+        - component
+        - React
+        - MUI
+        - UI
+        - frontend
+      intent_patterns:
+        - "(create|build).*?(component|UI|page)"
+
+  backend-dev-guidelines:
+    type: domain
+    enforcement: suggest
+    priority: high
+    prompt_triggers:
+      keywords:
+        - backend
+        - controller
+        - service
+        - route
+        - API
+        - endpoint
+      intent_patterns:
+        - "(create|add|implement).*?(route|endpoint|API|controller)"
+
+# Resource consumption estimates
+estimated_resources:
+  mcp_overhead_tokens: 8800
+  context_usage_percent: 6
+  available_context: 188000
+  recommended_monthly_budget:
+    anthropic_usd: 130
+    glm_cny: 14
+    code88_usd: 100
+
+# No upgrade path - this is the full version
+upgrade_to: null
+downgrade_to: standard
+downgrade_savings:
+  - Reduced token overhead (~40%)
+  - Simpler configuration
+  - Lower monthly cost

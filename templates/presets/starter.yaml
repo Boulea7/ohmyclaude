@@ -1,0 +1,91 @@
+# OhMyClaude Preset: Starter
+# Description: Entry-level configuration for new users and budget-conscious developers
+# Target: Claude Code beginners, personal projects, pay-as-you-go users
+# Token overhead: ~3,300 tokens (~2% of 200K context)
+
+name: starter
+description: |
+  入门配置 - 适合新手和预算敏感用户
+  Entry-level preset for beginners and budget-conscious users
+
+version: "1.0.0"
+
+# Model configuration
+model: sonnet
+always_thinking_enabled: true
+
+# CLAUDE.md template selection
+claude_md_template: general
+
+# MCP packages to install
+# Each package maps to a group of MCP servers
+mcp_packages:
+  - basic  # filesystem + context7
+
+# MCP server details (for reference)
+# actual configuration is handled by mcp_packages
+mcp_servers:
+  filesystem:
+    enabled: true
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@anthropic-ai/mcp-server-filesystem"
+    description: File system operations
+    estimated_tokens: 2500
+
+  context7:
+    enabled: true
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@upstash/context7-mcp"
+    description: Documentation lookup
+    estimated_tokens: 800
+
+# Slash commands to install
+commands:
+  - commit   # Smart Git commit with Conventional Commits
+  - review   # Code review with AI
+  - test     # Run tests and analyze failures
+
+# Agent templates to install
+agents:
+  - code-reviewer  # Code review specialist
+  - debugger       # Debugging assistant
+
+# Hooks preset
+hooks_preset: basic
+
+# Hooks configuration
+hooks:
+  SessionStart:
+    - type: command
+      command: 'echo "Branch: $(git branch --show-current 2>/dev/null || echo \"not a git repo\")"'
+      timeout: 5000
+      description: Show current Git branch
+
+# CodexMCP integration
+include_codex: false
+
+# Skills (not included in starter)
+skills: []
+
+# Resource consumption estimates
+estimated_resources:
+  mcp_overhead_tokens: 3300
+  context_usage_percent: 2
+  available_context: 196000
+  recommended_monthly_budget:
+    anthropic_usd: 80
+    glm_cny: 9
+    code88_usd: 64
+
+# Upgrade path
+upgrade_to: standard
+upgrade_benefits:
+  - Web search and reading capabilities
+  - Additional professional agents
+  - File edit tracking hooks

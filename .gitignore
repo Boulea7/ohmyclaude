@@ -2,6 +2,12 @@
 superclaude/
 codexmcp/
 claudedocs/
+ccsw/
+claude-code-infrastructure-showcase/
+
+# Documentation (for AI development assistance only)
+docs/
+CLAUDE.md
 
 # Claude Code local settings
 .claude/

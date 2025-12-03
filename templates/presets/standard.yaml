@@ -1,0 +1,126 @@
+# OhMyClaude Preset: Standard
+# Description: Balanced configuration for daily development work
+# Target: Regular developers, moderate budget, daily coding tasks
+# Token overhead: ~5,500 tokens (~3.5% of 200K context)
+
+name: standard
+description: |
+  标准配置 - 推荐日常开发使用
+  Standard preset for daily development work
+
+version: "1.0.0"
+
+# Model configuration
+model: sonnet
+always_thinking_enabled: true
+
+# CLAUDE.md template selection
+claude_md_template: general
+
+# MCP packages to install
+mcp_packages:
+  - basic  # filesystem + context7
+  - web    # web-reader + web-search-prime
+
+# MCP server details
+mcp_servers:
+  filesystem:
+    enabled: true
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@anthropic-ai/mcp-server-filesystem"
+    description: File system operations
+    estimated_tokens: 2500
+
+  context7:
+    enabled: true
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@upstash/context7-mcp"
+    description: Documentation lookup
+    estimated_tokens: 800
+
+  web-reader:
+    enabled: true
+    transport: sse
+    url: "https://mcp.api-inference.glm.ai/mcp/sse"
+    env:
+      Z_AI_KEY: "${GLM_API_KEY}"
+    description: Web page reading
+    estimated_tokens: 400
+
+  web-search-prime:
+    enabled: true
+    transport: sse
+    url: "https://mcp.api-inference.glm.ai/mcp/sse"
+    env:
+      Z_AI_KEY: "${GLM_API_KEY}"
+    description: Web search
+    estimated_tokens: 500
+
+# Slash commands to install
+commands:
+  - commit   # Smart Git commit with Conventional Commits
+  - review   # Code review with AI
+  - test     # Run tests and analyze failures
+  - codex    # Delegate task to Codex CLI
+
+# Agent templates to install
+agents:
+  - code-reviewer    # Code review specialist
+  - debugger         # Debugging assistant
+  - test-engineer    # Test automation expert
+  - refactor-expert  # Refactoring specialist
+  - doc-writer       # Technical documentation
+
+# Hooks preset
+hooks_preset: standard
+
+# Hooks configuration
+hooks:
+  SessionStart:
+    - type: command
+      command: 'echo "Branch: $(git branch --show-current 2>/dev/null || echo \"not a git repo\")"'
+      timeout: 5000
+      description: Show current Git branch
+    - type: command
+      command: 'for f in package.json Cargo.toml pyproject.toml go.mod; do [ -f $f ] && echo "Project: $f" && break; done'
+      timeout: 5000
+      description: Detect project type
+
+  PostToolUse:
+    - matcher: "Edit|Write|MultiEdit"
+      hooks:
+        - type: command
+          command: 'echo "[$(date +%Y-%m-%d\ %H:%M:%S)] Edited: $TOOL_INPUT" >> ~/.claude/edit_history.log'
+          timeout: 2000
+          description: Log file edits
+
+# CodexMCP integration
+include_codex: false
+
+# Skills (optional, can be enabled manually)
+skills: []
+
+# Resource consumption estimates
+estimated_resources:
+  mcp_overhead_tokens: 5500
+  context_usage_percent: 3.5
+  available_context: 193000
+  recommended_monthly_budget:
+    anthropic_usd: 100
+    glm_cny: 11
+    code88_usd: 80
+
+# Upgrade path
+upgrade_to: full
+upgrade_benefits:
+  - CodexMCP dual-AI collaboration
+  - Image and video analysis
+  - Skill auto-activation system
+  - Complete hook workflows
+  - Professional agents from showcase
