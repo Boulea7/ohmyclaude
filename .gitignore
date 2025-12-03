@@ -46,3 +46,4 @@ Thumbs.db
 credentials*
 api_key*
 secret*
+uv.lock
