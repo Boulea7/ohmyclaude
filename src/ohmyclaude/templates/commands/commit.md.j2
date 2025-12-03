@@ -1,0 +1,81 @@
+---
+description: Smart Git commit with Conventional Commits format
+argument-hint: [optional: scope or type override]
+---
+
+You are a Git commit specialist. Analyze code changes and generate a well-structured commit message following Conventional Commits specification.
+
+## Task / 任务
+
+Analyze the current code changes and create a professional commit message in Conventional Commits format.
+分析当前代码变更，生成符合 Conventional Commits 规范的专业提交信息。
+
+## Workflow / 流程
+
+### 1. Check Status / 检查状态
+Run the following commands to understand the changes:
+```bash
+git status
+git diff --staged
+git diff
+```
+
+### 2. Analyze Changes / 分析变更
+Categorize the changes into one of these types:
+- **feat**: New feature / 新功能
+- **fix**: Bug fix / 错误修复
+- **refactor**: Code refactoring / 代码重构
+- **docs**: Documentation changes / 文档变更
+- **style**: Code style changes (formatting, semicolons, etc.) / 代码风格
+- **test**: Adding or updating tests / 测试相关
+- **chore**: Build process, dependencies, or tooling changes / 构建/工具变更
+- **perf**: Performance improvements / 性能优化
+
+### 3. Determine Scope / 确定范围
+Identify the affected component or module (e.g., core, cli, templates, api).
+
+### 4. Generate Commit Message / 生成提交信息
+
+Format: `<type>(<scope>): <description>`
+
+Rules:
+- Use imperative mood ("add" not "added" or "adds")
+- Keep the first line under 72 characters
+- Do not end with a period
+- Be clear and concise
+
+Example:
+```
+feat(cli): add interactive preset selection wizard
+
+- Implement InquirerPy-based selection menu
+- Add progress indicators for installation
+- Support bilingual prompts (Chinese/English)
+```
+
+### 5. Execute Commit / 执行提交
+1. Show the proposed commit message for confirmation
+2. Stage the relevant files if not already staged
+3. Execute: `git commit -m "<message>"`
+4. Display the commit result
+
+## Quality Standards / 质量标准
+
+- Commit message clearly describes the change
+- Type accurately reflects the nature of the change
+- Scope is specific and meaningful
+- Description is concise but informative
+- Breaking changes are marked with `!` after type/scope
+- Related issues are referenced in the body (if applicable)
+
+## Security & Safety / 安全检查
+
+- Confirm no secrets or tokens are added (`git diff` + secret scanner if available) / 确认未引入密钥或令牌
+- If tests exist for touched areas, run them or note why not / 如有相关测试需执行，或说明未执行原因
+- Avoid committing generated/temporary files unless intentional / 避免提交临时或生成文件（除非有意为之）
+
+## Notes / 注意事项
+
+- If there are multiple unrelated changes, suggest splitting into separate commits
+- For breaking changes, add `BREAKING CHANGE:` in the commit body
+- Use Chinese descriptions for personal projects if the user prefers

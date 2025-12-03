@@ -1,0 +1,118 @@
+---
+description: Delegate task to Codex CLI for execution
+argument-hint: <task description for Codex>
+---
+
+You are coordinating with Codex CLI to accomplish a task. Use the CodexMCP tool to delegate work and collaborate on solutions.
+你将与 Codex CLI 协同完成任务，使用 CodexMCP 工具进行委派与协作。
+
+## Task / 任务
+
+Delegate the specified task to Codex CLI and collaborate on the results.
+将指定任务委托给 Codex CLI 并协作完成。
+
+## Arguments / 参数
+
+`$ARGUMENTS` - The task description to send to Codex
+
+## Workflow / 流程
+
+### 1. Prepare Task / 准备任务
+
+Before calling Codex:
+- Understand the user's request clearly
+- Identify what Codex is best suited for (debugging, analysis, code generation)
+- Formulate a clear, specific prompt
+- Remove or mask any secrets before sending context / 发送上下文前移除或掩盖所有密钥
+
+### 2. Call Codex / 调用 Codex
+
+Use the `mcp__codex__codex` tool with these parameters:
+
+```python
+{
+    "PROMPT": "$ARGUMENTS",
+    "cd": "/current/working/directory",
+    "sandbox": "read-only",  # Default: safe mode
+    "SESSION_ID": "",  # Empty for new session
+    "return_all_messages": false
+}
+```
+
+**Sandbox Modes / 沙箱模式**:
+- `read-only` - Default, safe for analysis / 默认，安全分析
+- `workspace-write` - Allow file modifications / 允许文件修改
+- `danger-full-access` - Full access (use with caution) / 完全访问（谨慎使用）
+
+### 3. Review Results / 审查结果
+
+After Codex responds:
+1. **Verify accuracy** / 验证准确性
+   - Check if the solution is correct
+   - Validate any code suggestions
+
+2. **Challenge assumptions** / 质疑假设
+   - Does the solution address the root cause?
+   - Are there edge cases not considered?
+
+3. **Refine if needed** / 必要时改进
+   - Use the returned `SESSION_ID` to continue the conversation
+   - Ask follow-up questions for clarification
+
+### 4. Implement Solution / 实施方案
+
+If Codex provides a solution:
+- Review the unified diff patch carefully
+- Rewrite the code for production quality if needed
+- Apply changes using appropriate tools
+
+## Collaboration Protocol / 协作协议
+
+### Key Rules / 关键规则
+
+1. **Save SESSION_ID** / 保存会话 ID
+   - Store the `SESSION_ID` from Codex responses
+   - Use it to continue multi-turn conversations
+
+2. **Read-Only by Default** / 默认只读
+   - Always use `sandbox="read-only"` unless modification is explicitly needed
+   - Request unified diff patches, not direct file changes
+
+3. **Critical Thinking** / 批判性思考
+   - Codex provides suggestions, not absolute answers
+   - Verify with official documentation when needed
+   - Challenge responses that seem incorrect
+
+4. **Complementary Strengths** / 互补优势
+   - **Claude Code**: Requirements analysis, architecture, user interaction
+   - **Codex**: Algorithm implementation, debugging, code review
+
+## Example Usage / 使用示例
+
+### Debug a Function / 调试函数
+```
+/codex Debug why the `parse_config` function fails with empty input
+```
+
+### Analyze Performance / 分析性能
+```
+/codex Analyze the time complexity of the sorting algorithm in utils.py
+```
+
+### Review Changes / 审查变更
+```
+/codex Review the recent changes to the authentication module for security issues
+```
+
+## Safety & Compliance / 安全合规
+
+- Keep sandbox at `read-only` unless the user explicitly approves write access / 未经用户明确授权保持 `read-only`
+- Never send credentials, tokens, or proprietary data to Codex / 禁止传递凭据、令牌或机密数据
+- Log the `SESSION_ID` only in safe notes; avoid persisting in source files / 仅在安全位置记录 `SESSION_ID`，不要写入源码
+
+## Quality Standards / 质量标准
+
+- Always verify Codex's suggestions before implementing
+- Use Codex for complex analysis, not simple tasks
+- Document any significant decisions made with Codex's help
+- If Codex's response is uncertain, ask for clarification or evidence

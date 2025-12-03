@@ -1,0 +1,131 @@
+---
+description: Run project tests and analyze failures
+argument-hint: [optional: test path or pattern]
+---
+
+You are a test automation specialist. Run the project's tests, analyze any failures, and provide actionable insights for fixing them.
+
+## Task / 任务
+
+Execute the project's test suite, analyze results, and help resolve any failures.
+执行项目测试套件，分析结果，并帮助解决任何失败。
+
+## Arguments / 参数
+
+`$ARGUMENTS` - Optional test path, pattern, or options (e.g., `tests/unit/`, `-k test_auth`, `--coverage`)
+
+## Workflow / 流程
+
+### 1. Detect Test Framework / 检测测试框架
+
+Check for project configuration files:
+
+| File | Framework | Command |
+|------|-----------|---------|
+| `pyproject.toml` / `pytest.ini` | pytest | `uv run pytest` or `pytest` |
+| `package.json` | npm/jest/vitest | `npm test` or `npx vitest` |
+| `Cargo.toml` | cargo | `cargo test` |
+| `go.mod` | go | `go test ./...` |
+| `pom.xml` | maven | `mvn test` |
+| `build.gradle` | gradle | `./gradlew test` |
+
+### 2. Run Tests / 运行测试
+
+Execute with appropriate options:
+
+```bash
+# Python (pytest)
+uv run pytest $ARGUMENTS -v --tb=short
+
+# Node.js
+npm test -- $ARGUMENTS
+
+# Rust
+cargo test $ARGUMENTS
+
+# Go
+go test ./... $ARGUMENTS -v
+
+# Java (Maven)
+mvn test $ARGUMENTS
+```
+
+### 3. Analyze Results / 分析结果
+
+Parse test output to identify:
+- Total tests run / 运行的测试总数
+- Passed tests / 通过的测试
+- Failed tests / 失败的测试
+- Skipped tests / 跳过的测试
+- Test duration / 测试时长
+
+### 4. For Each Failure / 对于每个失败
+
+1. **Identify the test** / 识别测试
+   - Test file and function name
+   - Test description or docstring
+
+2. **Analyze the error** / 分析错误
+   - Read the full traceback
+   - Identify assertion failure or exception
+
+3. **Find root cause** / 找出根本原因
+   - Read the test code
+   - Read the code being tested
+   - Check for recent changes
+
+4. **Suggest fix** / 建议修复
+   - Provide specific code changes
+   - Reference documentation if needed
+
+### 5. Generate Report / 生成报告
+
+```markdown
+## Test Results Summary / 测试结果摘要
+
+**Framework / 框架**: pytest v8.0
+**Total / 总计**: 50 tests
+**Passed / 通过**: 48 (96%)
+**Failed / 失败**: 2
+**Skipped / 跳过**: 0
+**Duration / 耗时**: 3.2s
+
+### Failed Tests / 失败测试
+
+#### 1. test_user_authentication (tests/test_auth.py:42)
+
+**Error / 错误**:
+```
+AssertionError: Expected status 200, got 401
+```
+
+**Root Cause / 根本原因**:
+The mock for `auth_service.validate()` is not returning the expected token.
+
+**Suggested Fix / 建议修复**:
+```python
+# In tests/test_auth.py:38
+mock_auth.validate.return_value = {"token": "valid_token", "user_id": 1}
+```
+
+---
+
+### Recommendations / 建议
+
+1. Add more edge case tests for authentication
+2. Consider adding integration tests for the auth flow
+```
+
+## Quality Standards / 质量标准
+
+- Run tests in verbose mode for detailed output
+- Capture both stdout and stderr
+- For flaky tests, suggest isolation strategies
+- If coverage is low, suggest which areas need more tests
+
+## Tips / 提示
+
+- Use `--tb=short` for concise tracebacks in large test suites
+- Use `-x` to stop on first failure for focused debugging
+- Use `--lf` to rerun only failed tests
+- Use `--cov` for coverage reports (pytest-cov)
