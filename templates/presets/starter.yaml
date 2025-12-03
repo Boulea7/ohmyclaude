@@ -18,32 +18,17 @@ always_thinking_enabled: true
 claude_md_template: general
 
 # MCP packages to install
-# Each package maps to a group of MCP servers
+# See templates/mcp/mcp_packages.yaml for package definitions
+# Available packages: basic, reasoning, browser, code, codex, web-free, web-glm, ui, transform, diff
 mcp_packages:
-  - basic  # filesystem + context7
+  - basic       # filesystem + context7 (FREE)
 
-# MCP server details (for reference)
-# actual configuration is handled by mcp_packages
-mcp_servers:
-  filesystem:
-    enabled: true
-    transport: stdio
-    command: npx
-    args:
-      - "-y"
-      - "@anthropic-ai/mcp-server-filesystem"
-    description: File system operations
-    estimated_tokens: 2500
-
-  context7:
-    enabled: true
-    transport: stdio
-    command: npx
-    args:
-      - "-y"
-      - "@upstash/context7-mcp"
-    description: Documentation lookup
-    estimated_tokens: 800
+# MCP server overrides (optional - uncomment to customize)
+# mcp_servers:
+#   filesystem:
+#     enabled: true
+#   context7:
+#     enabled: true
 
 # Slash commands to install
 commands:

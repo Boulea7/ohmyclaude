@@ -18,49 +18,22 @@ always_thinking_enabled: true
 claude_md_template: standard
 
 # MCP packages to install
+# See templates/mcp/mcp_packages.yaml for package definitions
+# Standard preset focuses on code-related tools (all FREE)
 mcp_packages:
-  - basic  # filesystem + context7
-  - web    # web-reader + web-search-prime
+  - basic       # filesystem + context7 (FREE)
+  - reasoning   # sequential-thinking (FREE)
+  - code        # serena - semantic code understanding (FREE, requires Python/uvx)
+  - codex       # CodexMCP - Claude + Codex collaboration (FREE, requires Codex CLI)
 
-# MCP server details
-mcp_servers:
-  filesystem:
-    enabled: true
-    transport: stdio
-    command: npx
-    args:
-      - "-y"
-      - "@anthropic-ai/mcp-server-filesystem"
-    description: File system operations
-    estimated_tokens: 2500
+# Optional paid packages (uncomment to enable)
+# mcp_packages_optional:
+#   - web-glm   # 智谱 AI web services (PAID - requires GLM_API_KEY)
 
-  context7:
-    enabled: true
-    transport: stdio
-    command: npx
-    args:
-      - "-y"
-      - "@upstash/context7-mcp"
-    description: Documentation lookup
-    estimated_tokens: 800
-
-  web-reader:
-    enabled: true
-    transport: sse
-    url: "https://mcp.api-inference.glm.ai/mcp/sse"
-    env:
-      Z_AI_KEY: "${GLM_API_KEY}"
-    description: Web page reading
-    estimated_tokens: 400
-
-  web-search-prime:
-    enabled: true
-    transport: sse
-    url: "https://mcp.api-inference.glm.ai/mcp/sse"
-    env:
-      Z_AI_KEY: "${GLM_API_KEY}"
-    description: Web search
-    estimated_tokens: 500
+# MCP server overrides (optional - uncomment to customize)
+# mcp_servers:
+#   filesystem:
+#     enabled: true
 
 # Slash commands to install
 commands:

@@ -1,0 +1,389 @@
+# OhMyClaude MCP Package Definitions
+#
+# This file defines MCP server packages that can be combined in presets.
+# Each package is a group of related MCP servers.
+#
+# Cost tiers:
+#   - free: No API key required, completely free
+#   - free-tier: Has free tier with limits
+#   - paid: Requires paid API key
+#   - optional: User's choice, works without but enhanced with
+
+version: "1.0.0"
+
+# =============================================================================
+# Package Definitions
+# =============================================================================
+
+packages:
+  # ---------------------------------------------------------------------------
+  # BASIC: Essential free tools for all users
+  # ---------------------------------------------------------------------------
+  basic:
+    name: "Basic Essentials"
+    description: "Core tools for file operations and documentation lookup"
+    description_cn: "核心工具：文件操作和文档查询"
+    cost_tier: free
+    servers:
+      - filesystem
+      - context7
+
+  # ---------------------------------------------------------------------------
+  # REASONING: Advanced reasoning capabilities
+  # ---------------------------------------------------------------------------
+  reasoning:
+    name: "Reasoning Engine"
+    description: "Multi-step reasoning and systematic analysis"
+    description_cn: "多步推理和系统性分析"
+    cost_tier: free
+    servers:
+      - sequential-thinking
+
+  # ---------------------------------------------------------------------------
+  # BROWSER: Browser automation and testing
+  # ---------------------------------------------------------------------------
+  browser:
+    name: "Browser Automation"
+    description: "E2E testing and browser debugging"
+    description_cn: "端到端测试和浏览器调试"
+    cost_tier: free
+    servers:
+      - playwright
+      - chrome-devtools
+
+  # ---------------------------------------------------------------------------
+  # CODE: Code understanding and analysis
+  # ---------------------------------------------------------------------------
+  code:
+    name: "Code Intelligence"
+    description: "Semantic code understanding and project memory"
+    description_cn: "语义代码理解和项目记忆"
+    cost_tier: free
+    requires:
+      - "Python 3.9+"
+      - "uv package manager"
+    servers:
+      - serena
+
+  # ---------------------------------------------------------------------------
+  # CODEX: Claude + Codex collaboration
+  # ---------------------------------------------------------------------------
+  codex:
+    name: "CodexMCP"
+    description: "Claude Code and Codex CLI collaboration"
+    description_cn: "Claude Code 与 Codex CLI 协作"
+    cost_tier: free
+    requires:
+      - "Codex CLI installed"
+      - "uv package manager"
+    servers:
+      - codex
+
+  # ---------------------------------------------------------------------------
+  # WEB-FREE: Web search with free tier
+  # ---------------------------------------------------------------------------
+  web-free:
+    name: "Web Search (Free)"
+    description: "Web search and research (free tier available)"
+    description_cn: "网络搜索和研究（有免费额度）"
+    cost_tier: free-tier
+    api_key_env: TAVILY_API_KEY
+    api_key_url: "https://app.tavily.com"
+    servers:
+      - tavily
+
+  # ---------------------------------------------------------------------------
+  # WEB-GLM: 智谱 AI MCP (Chinese users, paid)
+  # ---------------------------------------------------------------------------
+  web-glm:
+    name: "智谱 AI Web Services"
+    description: "GLM web reading, search, and media analysis (paid)"
+    description_cn: "智谱 AI 网页阅读、搜索和多媒体分析（付费）"
+    cost_tier: paid
+    api_key_env: GLM_API_KEY
+    api_key_url: "https://open.bigmodel.cn/"
+    optional: true
+    servers:
+      - web-reader
+      - web-search-prime
+      - zai-mcp-server
+
+  # ---------------------------------------------------------------------------
+  # UI: UI component generation
+  # ---------------------------------------------------------------------------
+  ui:
+    name: "UI Components"
+    description: "Modern UI component generation (paid)"
+    description_cn: "现代 UI 组件生成（付费）"
+    cost_tier: paid
+    api_key_env: TWENTYFIRST_API_KEY
+    api_key_url: "https://21st.dev"
+    optional: true
+    servers:
+      - magic
+
+  # ---------------------------------------------------------------------------
+  # TRANSFORM: Code transformation tools
+  # ---------------------------------------------------------------------------
+  transform:
+    name: "Code Transformation"
+    description: "Pattern-based code transformations (paid)"
+    description_cn: "基于模式的代码转换（付费）"
+    cost_tier: paid
+    api_key_env: MORPH_API_KEY
+    optional: true
+    servers:
+      - morphllm-fast-apply
+
+  # ---------------------------------------------------------------------------
+  # DIFF: Diff visualization
+  # ---------------------------------------------------------------------------
+  diff:
+    name: "Diff Visualization"
+    description: "Visual diff output for code changes"
+    description_cn: "代码变更可视化差异输出"
+    cost_tier: free
+    servers:
+      - unified-diff
+
+# =============================================================================
+# Server Definitions
+# =============================================================================
+
+servers:
+  # --- FREE SERVERS (No API Key Required) ---
+
+  filesystem:
+    name: "Filesystem"
+    description: "File system operations"
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@anthropic-ai/mcp-server-filesystem"
+    estimated_tokens: 2500
+    cost_tier: free
+
+  context7:
+    name: "Context7"
+    description: "Official library documentation lookup"
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@upstash/context7-mcp@latest"
+    estimated_tokens: 800
+    cost_tier: free
+
+  sequential-thinking:
+    name: "Sequential Thinking"
+    description: "Multi-step reasoning and analysis"
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-sequential-thinking"
+    estimated_tokens: 1200
+    cost_tier: free
+
+  playwright:
+    name: "Playwright"
+    description: "Browser automation and E2E testing"
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@playwright/mcp@latest"
+    estimated_tokens: 1500
+    cost_tier: free
+
+  chrome-devtools:
+    name: "Chrome DevTools"
+    description: "Performance analysis and debugging"
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "chrome-devtools-mcp@latest"
+    estimated_tokens: 1000
+    cost_tier: free
+
+  serena:
+    name: "Serena"
+    description: "Semantic code understanding with project memory"
+    transport: stdio
+    command: uvx
+    args:
+      - "--from"
+      - "git+https://github.com/oraios/serena"
+      - "serena"
+      - "start-mcp-server"
+      - "--context"
+      - "ide-assistant"
+    estimated_tokens: 1500
+    cost_tier: free
+    requires:
+      - "Python 3.9+"
+      - "uv package manager"
+
+  codex:
+    name: "CodexMCP"
+    description: "Claude Code + Codex collaboration"
+    transport: stdio
+    command: uvx
+    args:
+      - "--from"
+      - "git+https://github.com/GuDaStudio/codexmcp.git"
+      - "codexmcp"
+    estimated_tokens: 500
+    cost_tier: free
+    requires:
+      - "Codex CLI installed"
+      - "uv package manager"
+
+  unified-diff:
+    name: "Unified Diff"
+    description: "Diff visualization for code changes"
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@anthropic-ai/unified-diff-mcp@latest"
+    estimated_tokens: 400
+    cost_tier: free
+
+  # --- FREE-TIER SERVERS (Free tier available) ---
+
+  tavily:
+    name: "Tavily"
+    description: "Web search and real-time information"
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "tavily-mcp@latest"
+    env:
+      TAVILY_API_KEY: "${TAVILY_API_KEY}"
+    estimated_tokens: 600
+    cost_tier: free-tier
+    api_key_env: TAVILY_API_KEY
+    api_key_url: "https://app.tavily.com"
+
+  # --- PAID SERVERS (API Key Required) ---
+
+  web-reader:
+    name: "GLM Web Reader"
+    description: "Web page reading (智谱 AI)"
+    transport: sse
+    url: "https://mcp.api-inference.glm.ai/mcp/sse"
+    env:
+      Z_AI_KEY: "${GLM_API_KEY}"
+    estimated_tokens: 400
+    cost_tier: paid
+    api_key_env: GLM_API_KEY
+
+  web-search-prime:
+    name: "GLM Web Search"
+    description: "Web search (智谱 AI)"
+    transport: sse
+    url: "https://mcp.api-inference.glm.ai/mcp/sse"
+    env:
+      Z_AI_KEY: "${GLM_API_KEY}"
+    estimated_tokens: 500
+    cost_tier: paid
+    api_key_env: GLM_API_KEY
+
+  zai-mcp-server:
+    name: "GLM Media Analysis"
+    description: "Image and video analysis (智谱 AI)"
+    transport: sse
+    url: "https://mcp.api-inference.glm.ai/mcp/sse"
+    env:
+      Z_AI_KEY: "${GLM_API_KEY}"
+    estimated_tokens: 600
+    cost_tier: paid
+    api_key_env: GLM_API_KEY
+
+  magic:
+    name: "Magic (21st.dev)"
+    description: "Modern UI component generation"
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@21st-dev/magic"
+    env:
+      TWENTYFIRST_API_KEY: "${TWENTYFIRST_API_KEY}"
+    estimated_tokens: 800
+    cost_tier: paid
+    api_key_env: TWENTYFIRST_API_KEY
+
+  morphllm-fast-apply:
+    name: "MorphLLM Fast Apply"
+    description: "Pattern-based code transformations"
+    transport: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@morph-llm/morph-fast-apply"
+    env:
+      MORPH_API_KEY: "${MORPH_API_KEY}"
+    estimated_tokens: 700
+    cost_tier: paid
+    api_key_env: MORPH_API_KEY
+
+# =============================================================================
+# Preset Bundles (Recommended combinations)
+# =============================================================================
+
+bundles:
+  starter:
+    name: "Starter Bundle"
+    description: "Essential free tools for beginners"
+    description_cn: "入门必备的免费工具"
+    packages:
+      - basic
+    estimated_tokens: 3300
+
+  standard:
+    name: "Standard Bundle"
+    description: "Balanced tools for daily development"
+    description_cn: "日常开发的平衡工具集"
+    packages:
+      - basic
+      - reasoning
+      - code
+      - codex
+    estimated_tokens: 6000
+
+  full-free:
+    name: "Full Free Bundle"
+    description: "All free tools without paid services"
+    description_cn: "所有免费工具（不含付费服务）"
+    packages:
+      - basic
+      - reasoning
+      - browser
+      - code
+      - codex
+      - web-free
+      - diff
+    estimated_tokens: 9500
+
+  full:
+    name: "Full Bundle"
+    description: "Complete toolset including optional paid services"
+    description_cn: "完整工具集（包含可选付费服务）"
+    packages:
+      - basic
+      - reasoning
+      - browser
+      - code
+      - codex
+      - web-free
+      - diff
+    optional_packages:
+      - web-glm
+      - ui
+      - transform
+    estimated_tokens: 12000

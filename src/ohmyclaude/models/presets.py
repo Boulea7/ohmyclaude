@@ -76,7 +76,11 @@ class PresetConfig(BaseModel):
     # MCP configuration
     mcp_packages: list[str] = Field(
         default_factory=list,
-        description="MCP package groups to install (basic, web, advanced)",
+        description="MCP package groups to install (basic, reasoning, code, etc.)",
+    )
+    mcp_packages_optional: list[str] = Field(
+        default_factory=list,
+        description="Optional paid MCP packages (web-glm, ui, transform)",
     )
     mcp_servers: dict[str, McpServerPreset] = Field(
         default_factory=dict,

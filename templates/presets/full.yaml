@@ -18,69 +18,27 @@ always_thinking_enabled: true
 claude_md_template: full  # Can be: general, standard, full, frontend, backend, ml
 
 # MCP packages to install
+# See templates/mcp/mcp_packages.yaml for package definitions
+# Full preset includes all FREE tools + optional paid services
 mcp_packages:
-  - basic     # filesystem + context7
-  - web       # web-reader + web-search-prime
-  - advanced  # zai-mcp-server + unified-diff
+  - basic       # filesystem + context7 (FREE)
+  - reasoning   # sequential-thinking (FREE)
+  - browser     # playwright + chrome-devtools (FREE)
+  - code        # serena - semantic code understanding (FREE)
+  - codex       # CodexMCP - Claude + Codex collaboration (FREE)
+  - web-free    # tavily - web search (FREE tier available)
+  - diff        # unified-diff (FREE)
 
-# MCP server details
-mcp_servers:
-  filesystem:
-    enabled: true
-    transport: stdio
-    command: npx
-    args:
-      - "-y"
-      - "@anthropic-ai/mcp-server-filesystem"
-    description: File system operations
-    estimated_tokens: 2500
+# Optional paid packages (user can enable via setup wizard)
+mcp_packages_optional:
+  - web-glm     # 智谱 AI web services (PAID - GLM_API_KEY)
+  - ui          # magic - UI components (PAID - TWENTYFIRST_API_KEY)
+  - transform   # morphllm - code transformation (PAID - MORPH_API_KEY)
 
-  context7:
-    enabled: true
-    transport: stdio
-    command: npx
-    args:
-      - "-y"
-      - "@upstash/context7-mcp"
-    description: Documentation lookup
-    estimated_tokens: 800
-
-  web-reader:
-    enabled: true
-    transport: sse
-    url: "https://mcp.api-inference.glm.ai/mcp/sse"
-    env:
-      Z_AI_KEY: "${GLM_API_KEY}"
-    description: Web page reading
-    estimated_tokens: 400
-
-  web-search-prime:
-    enabled: true
-    transport: sse
-    url: "https://mcp.api-inference.glm.ai/mcp/sse"
-    env:
-      Z_AI_KEY: "${GLM_API_KEY}"
-    description: Web search
-    estimated_tokens: 500
-
-  zai-mcp-server:
-    enabled: true
-    transport: sse
-    url: "https://mcp.api-inference.glm.ai/mcp/sse"
-    env:
-      Z_AI_KEY: "${GLM_API_KEY}"
-    description: Image and video analysis
-    estimated_tokens: 600
-
-  unified-diff:
-    enabled: true
-    transport: stdio
-    command: bun
-    args:
-      - "run"
-      - "${OHMYCLAUDE_ROOT}/mcp/unified-diff/index.ts"
-    description: Diff visualization
-    estimated_tokens: 500
+# MCP server overrides (optional - uncomment to customize)
+# mcp_servers:
+#   filesystem:
+#     enabled: true
 
 # Slash commands to install
 commands:
