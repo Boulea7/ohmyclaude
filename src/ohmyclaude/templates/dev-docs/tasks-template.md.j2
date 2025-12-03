@@ -1,0 +1,154 @@
+# {{ task_name }} - Task Checklist
+# {{ task_name }} - 任务清单
+
+> Last Updated: {{ date }}
+> Status: {{ status | default("In Progress") }}
+> Progress: {{ completed_count | default(0) }}/{{ total_count | default(0) }} tasks completed
+
+---
+
+## Quick Stats / 快速统计
+
+| Category / 类别 | Total / 总计 | Done / 完成 | Remaining / 剩余 |
+|-----------------|--------------|-------------|------------------|
+| Critical / 关键 | {{ critical_total | default(0) }} | {{ critical_done | default(0) }} | {{ critical_remaining | default(0) }} |
+| High / 高优先级 | {{ high_total | default(0) }} | {{ high_done | default(0) }} | {{ high_remaining | default(0) }} |
+| Medium / 中等 | {{ medium_total | default(0) }} | {{ medium_done | default(0) }} | {{ medium_remaining | default(0) }} |
+| Low / 低优先级 | {{ low_total | default(0) }} | {{ low_done | default(0) }} | {{ low_remaining | default(0) }} |
+
+---
+
+## Phase 1: {{ phase1_name | default("Foundation / 基础") }}
+
+### Critical / 关键任务
+
+{% for task in phase1_critical %}
+- [{{ "x" if task.done else " " }}] **{{ task.name }}** {{ task.description | default("") }}
+  - Acceptance: {{ task.acceptance | default("[Acceptance criteria]") }}
+  - Files: {{ task.files | default("[Related files]") }}
+{% else %}
+- [ ] **Task 1.1** [Description]
+  - Acceptance: [What defines "done"]
+  - Files: [Related files]
+{% endfor %}
+
+### High Priority / 高优先级
+
+{% for task in phase1_high %}
+- [{{ "x" if task.done else " " }}] {{ task.name }} {{ task.description | default("") }}
+{% else %}
+- [ ] Task 1.2 [Description]
+- [ ] Task 1.3 [Description]
+{% endfor %}
+
+---
+
+## Phase 2: {{ phase2_name | default("Core Implementation / 核心实现") }}
+
+### Critical / 关键任务
+
+{% for task in phase2_critical %}
+- [{{ "x" if task.done else " " }}] **{{ task.name }}** {{ task.description | default("") }}
+  - Acceptance: {{ task.acceptance | default("[Acceptance criteria]") }}
+{% else %}
+- [ ] **Task 2.1** [Description]
+  - Acceptance: [What defines "done"]
+{% endfor %}
+
+### High Priority / 高优先级
+
+{% for task in phase2_high %}
+- [{{ "x" if task.done else " " }}] {{ task.name }} {{ task.description | default("") }}
+{% else %}
+- [ ] Task 2.2 [Description]
+- [ ] Task 2.3 [Description]
+{% endfor %}
+
+### Medium Priority / 中等优先级
+
+{% for task in phase2_medium %}
+- [{{ "x" if task.done else " " }}] {{ task.name }} {{ task.description | default("") }}
+{% else %}
+- [ ] Task 2.4 [Description]
+{% endfor %}
+
+---
+
+## Phase 3: {{ phase3_name | default("Testing & Polish / 测试与完善") }}
+
+### Testing Tasks / 测试任务
+
+{% for task in phase3_testing %}
+- [{{ "x" if task.done else " " }}] {{ task.name }} {{ task.description | default("") }}
+{% else %}
+- [ ] Write unit tests for [component]
+- [ ] Write integration tests for [feature]
+- [ ] Manual testing of [functionality]
+{% endfor %}
+
+### Documentation Tasks / 文档任务
+
+{% for task in phase3_docs %}
+- [{{ "x" if task.done else " " }}] {{ task.name }} {{ task.description | default("") }}
+{% else %}
+- [ ] Update README.md
+- [ ] Add inline documentation
+- [ ] Update CHANGELOG.md
+{% endfor %}
+
+### Cleanup Tasks / 清理任务
+
+{% for task in phase3_cleanup %}
+- [{{ "x" if task.done else " " }}] {{ task.name }} {{ task.description | default("") }}
+{% else %}
+- [ ] Remove debug code
+- [ ] Run linter and fix issues
+- [ ] Code review checklist
+{% endfor %}
+
+---
+
+## Blocked Tasks / 阻塞任务
+
+| Task / 任务 | Blocked By / 阻塞原因 | Action Needed / 需要的操作 |
+|-------------|----------------------|---------------------------|
+{% for task in blocked_tasks %}
+| {{ task.name }} | {{ task.blocked_by }} | {{ task.action }} |
+{% else %}
+| [No blocked tasks] | - | - |
+{% endfor %}
+
+---
+
+## Completed Tasks Log / 已完成任务日志
+
+| Date / 日期 | Task / 任务 | Notes / 备注 |
+|-------------|-------------|--------------|
+{% for task in completed_log %}
+| {{ task.date }} | {{ task.name }} | {{ task.notes | default("") }} |
+{% else %}
+| YYYY-MM-DD | [Task name] | [Any relevant notes] |
+{% endfor %}
+
+---
+
+## Session Resume Guide / 会话恢复指南
+
+To continue this task in a new session, say:
+在新会话中继续此任务，请说：
+
+```
+Continue working on {{ task_name }}. Please read:
+- dev/active/{{ task_name }}/{{ task_name }}-plan.md
+- dev/active/{{ task_name }}/{{ task_name }}-context.md
+- dev/active/{{ task_name }}/{{ task_name }}-tasks.md
+
+Then continue from where we left off.
+```
+
+---
+
+## Cross-References / 交叉引用
+
+- Plan: `{{ task_name }}-plan.md`
+- Context: `{{ task_name }}-context.md`

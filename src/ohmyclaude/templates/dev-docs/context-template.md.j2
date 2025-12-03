@@ -1,0 +1,126 @@
+# {{ task_name }} - Context
+# {{ task_name }} - 上下文
+
+> Last Updated: {{ date }}
+> Related Plan: {{ task_name }}-plan.md
+
+---
+
+## 1. Key Files / 关键文件
+
+### 1.1 Files to Modify / 需要修改的文件
+
+| File / 文件 | Purpose / 用途 | Notes / 备注 |
+|-------------|----------------|--------------|
+{% for file in files_to_modify %}
+| `{{ file.path }}` | {{ file.purpose }} | {{ file.notes | default("") }} |
+{% else %}
+| `path/to/file.py` | [Purpose] | [Notes] |
+{% endfor %}
+
+### 1.2 Files to Create / 需要创建的文件
+
+| File / 文件 | Purpose / 用途 | Template / 模板 |
+|-------------|----------------|-----------------|
+{% for file in files_to_create %}
+| `{{ file.path }}` | {{ file.purpose }} | {{ file.template | default("N/A") }} |
+{% else %}
+| `path/to/new_file.py` | [Purpose] | [Template if any] |
+{% endfor %}
+
+### 1.3 Reference Files / 参考文件
+
+| File / 文件 | Reason / 原因 |
+|-------------|---------------|
+{% for file in reference_files %}
+| `{{ file.path }}` | {{ file.reason }} |
+{% else %}
+| `path/to/reference.py` | [Why this file is relevant] |
+{% endfor %}
+
+---
+
+## 2. Architecture Context / 架构上下文
+
+### 2.1 Component Relationships / 组件关系
+
+```
+{{ component_diagram | default("[ASCII diagram or description of how components interact]") }}
+```
+
+### 2.2 Data Flow / 数据流
+
+{{ data_flow | default("[Description of how data flows through the system]") }}
+
+---
+
+## 3. Dependencies / 依赖关系
+
+### 3.1 External Dependencies / 外部依赖
+
+| Package / 包 | Version / 版本 | Purpose / 用途 |
+|--------------|----------------|----------------|
+{% for dep in external_deps %}
+| `{{ dep.name }}` | {{ dep.version }} | {{ dep.purpose }} |
+{% else %}
+| `package-name` | `^1.0.0` | [Purpose] |
+{% endfor %}
+
+### 3.2 Internal Dependencies / 内部依赖
+
+{{ internal_deps | default("[List of internal modules/services this task depends on]") }}
+
+---
+
+## 4. Technical Decisions / 技术决策
+
+### Decision 1: {{ decision1_title | default("[Decision Title]") }}
+
+**Context / 背景**: {{ decision1_context | default("[Why this decision was needed]") }}
+
+**Decision / 决策**: {{ decision1_decision | default("[What was decided]") }}
+
+**Rationale / 理由**: {{ decision1_rationale | default("[Why this choice was made]") }}
+
+**Alternatives Considered / 考虑的替代方案**:
+{{ decision1_alternatives | default("- Alternative A: [Pros/Cons]\n- Alternative B: [Pros/Cons]") }}
+
+---
+
+## 5. API Contracts / API 契约
+
+### 5.1 New APIs / 新增 API
+
+{{ new_apis | default("[Document any new APIs being introduced]") }}
+
+### 5.2 Modified APIs / 修改的 API
+
+{{ modified_apis | default("[Document any API changes]") }}
+
+---
+
+## 6. Testing Strategy / 测试策略
+
+### 6.1 Unit Tests / 单元测试
+
+{{ unit_tests | default("[What unit tests need to be written]") }}
+
+### 6.2 Integration Tests / 集成测试
+
+{{ integration_tests | default("[What integration tests are needed]") }}
+
+---
+
+## 7. Session Notes / 会话笔记
+
+### {{ session_date | default("YYYY-MM-DD") }}
+
+{{ session_notes | default("[Notes from this development session]") }}
+
+---
+
+## Cross-References / 交叉引用
+
+- Plan: `{{ task_name }}-plan.md`
+- Tasks: `{{ task_name }}-tasks.md`
+- Code Review: `{{ task_name }}-code-review.md` (if exists)

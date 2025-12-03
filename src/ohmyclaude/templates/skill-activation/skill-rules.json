@@ -1,0 +1,251 @@
+{
+    "version": "1.0",
+    "description": "OhMyClaude Skill activation triggers (Bilingual: Chinese + English)",
+    "skills": {
+        "skill-developer": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Meta-skill for creating and managing Claude Code skills | 技能系统管理",
+            "promptTriggers": {
+                "keywords": [
+                    "skill system", "create skill", "add skill", "skill triggers",
+                    "技能系统", "创建技能", "添加技能", "技能触发",
+                    "hook system", "skill development", "skill-rules.json"
+                ],
+                "intentPatterns": [
+                    "(how do|how does|explain|如何|怎么).*?skill",
+                    "(create|add|modify|build|创建|添加|修改).*?skill",
+                    "skill.*?(work|trigger|activate|system|工作|触发|激活)"
+                ]
+            }
+        },
+        "backend-dev-guidelines": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Backend development patterns (Python/Node.js/TypeScript) | 后端开发规范",
+            "promptTriggers": {
+                "keywords": [
+                    "backend", "microservice", "controller", "service", "repository",
+                    "后端", "微服务", "控制器", "服务层", "仓储层",
+                    "route", "routing", "API", "endpoint", "middleware",
+                    "路由", "接口", "中间件", "验证",
+                    "FastAPI", "Express", "Flask", "Django",
+                    "Prisma", "SQLAlchemy", "database access"
+                ],
+                "intentPatterns": [
+                    "(create|add|implement|build|创建|添加|实现).*?(route|endpoint|API|controller|service|路由|接口|控制器|服务)",
+                    "(fix|handle|debug|修复|处理|调试).*?(error|exception|backend|错误|异常|后端)",
+                    "(add|implement|添加|实现).*?(middleware|validation|error.*?handling|中间件|验证|错误处理)",
+                    "(organize|structure|refactor|组织|结构|重构).*?(backend|service|API|后端|服务)",
+                    "(how to|best practice|如何|最佳实践).*?(backend|route|controller|service|后端|路由|控制器)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "backend/**/*.py",
+                    "backend/**/*.ts",
+                    "api/**/*.py",
+                    "api/**/*.ts",
+                    "server/**/*.ts",
+                    "services/**/*.py",
+                    "src/api/**/*.py",
+                    "src/services/**/*.py"
+                ],
+                "pathExclusions": [
+                    "**/*test*.py",
+                    "**/*test*.ts",
+                    "**/*.spec.ts"
+                ]
+            }
+        },
+        "frontend-dev-guidelines": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "React/Vue/TypeScript best practices | 前端开发规范",
+            "promptTriggers": {
+                "keywords": [
+                    "component", "react component", "vue component", "UI", "interface",
+                    "组件", "React组件", "Vue组件", "界面", "交互",
+                    "page", "modal", "dialog", "form", "button",
+                    "页面", "模态框", "对话框", "表单", "按钮",
+                    "MUI", "Material-UI", "Ant Design", "Element Plus",
+                    "styling", "frontend", "React", "Vue", "Next.js"
+                ],
+                "intentPatterns": [
+                    "(create|add|make|build|update|modify|edit|创建|添加|构建|更新|修改).*?(component|UI|page|modal|dialog|form|组件|界面|页面|模态框|表单)",
+                    "(how to|best practice|如何|最佳实践).*?(component|react|vue|组件)",
+                    "(style|design|layout|样式|设计|布局).*?(component|UI|组件|界面)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "frontend/src/**/*.tsx",
+                    "frontend/src/**/*.vue",
+                    "client/src/**/*.tsx",
+                    "src/components/**/*.tsx",
+                    "src/pages/**/*.tsx",
+                    "src/views/**/*.vue"
+                ],
+                "pathExclusions": [
+                    "**/*.test.tsx",
+                    "**/*.spec.tsx",
+                    "**/*.styles.ts",
+                    "**/vite.config.ts"
+                ]
+            }
+        },
+        "python-dev-guidelines": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Python development best practices | Python 开发规范",
+            "promptTriggers": {
+                "keywords": [
+                    "python", "pydantic", "typing", "type hints",
+                    "Python", "类型提示", "数据验证",
+                    "async", "await", "asyncio", "coroutine",
+                    "异步", "协程",
+                    "pytest", "unittest", "testing",
+                    "测试", "单元测试",
+                    "poetry", "pip", "requirements",
+                    "依赖管理", "包管理"
+                ],
+                "intentPatterns": [
+                    "(create|add|implement|创建|添加|实现).*?(class|function|module|类|函数|模块)",
+                    "(how to|best practice|如何|最佳实践).*?(python|pydantic|async)",
+                    "(fix|debug|修复|调试).*?(python|import|dependency|导入|依赖)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/*.py"
+                ],
+                "pathExclusions": [
+                    "**/*test*.py",
+                    "**/conftest.py"
+                ]
+            }
+        },
+        "git-workflow": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "medium",
+            "description": "Git workflow and commit conventions | Git 工作流规范",
+            "promptTriggers": {
+                "keywords": [
+                    "git", "commit", "branch", "merge", "rebase",
+                    "提交", "分支", "合并", "变基",
+                    "pull request", "PR", "code review",
+                    "拉取请求", "代码审查",
+                    "conventional commits", "commit message",
+                    "提交信息", "提交规范"
+                ],
+                "intentPatterns": [
+                    "(create|make|write|创建|编写).*?(commit|branch|PR|提交|分支)",
+                    "(how to|best practice|如何|最佳实践).*?(git|commit|branch|merge)",
+                    "(fix|resolve|修复|解决).*?(conflict|merge|冲突|合并)"
+                ]
+            }
+        },
+        "testing-guidelines": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Testing best practices (pytest/jest/vitest) | 测试规范",
+            "promptTriggers": {
+                "keywords": [
+                    "test", "testing", "unit test", "integration test",
+                    "测试", "单元测试", "集成测试",
+                    "pytest", "jest", "vitest", "coverage",
+                    "测试覆盖率", "代码覆盖",
+                    "mock", "fixture", "assertion",
+                    "模拟", "断言"
+                ],
+                "intentPatterns": [
+                    "(create|add|write|创建|添加|编写).*?(test|spec|测试)",
+                    "(how to|best practice|如何|最佳实践).*?(test|mock|coverage|测试|模拟|覆盖率)",
+                    "(fix|debug|修复|调试).*?(test|failing|测试|失败)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/*test*.py",
+                    "**/*.test.ts",
+                    "**/*.spec.ts",
+                    "**/tests/**/*"
+                ]
+            }
+        },
+        "database-guidelines": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Database patterns (Prisma/SQLAlchemy/raw SQL) | 数据库规范",
+            "promptTriggers": {
+                "keywords": [
+                    "database", "db", "SQL", "query", "migration",
+                    "数据库", "查询", "迁移",
+                    "Prisma", "SQLAlchemy", "ORM",
+                    "table", "schema", "relation",
+                    "表", "模式", "关系",
+                    "index", "transaction", "connection",
+                    "索引", "事务", "连接"
+                ],
+                "intentPatterns": [
+                    "(create|add|modify|创建|添加|修改).*?(table|schema|migration|model|表|模式|迁移|模型)",
+                    "(how to|best practice|如何|最佳实践).*?(database|query|index|数据库|查询|索引)",
+                    "(optimize|improve|优化|改进).*?(query|performance|查询|性能)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/models/**/*.py",
+                    "**/schema.prisma",
+                    "**/migrations/**/*",
+                    "**/db/**/*"
+                ]
+            }
+        },
+        "security-guidelines": {
+            "type": "guardrail",
+            "enforcement": "warn",
+            "priority": "critical",
+            "description": "Security best practices and vulnerability prevention | 安全规范",
+            "promptTriggers": {
+                "keywords": [
+                    "security", "auth", "authentication", "authorization",
+                    "安全", "认证", "授权", "鉴权",
+                    "password", "token", "JWT", "API key",
+                    "密码", "令牌", "密钥",
+                    "encryption", "hash", "secret",
+                    "加密", "哈希", "机密",
+                    "OWASP", "XSS", "CSRF", "SQL injection",
+                    "跨站脚本", "跨站请求伪造", "SQL注入"
+                ],
+                "intentPatterns": [
+                    "(implement|add|create|实现|添加|创建).*?(auth|security|login|注册|登录|安全)",
+                    "(how to|best practice|如何|最佳实践).*?(security|auth|password|安全|认证|密码)",
+                    "(store|handle|处理|存储).*?(password|secret|credential|密码|机密|凭证)"
+                ]
+            },
+            "warnMessage": "Security-sensitive code detected. Please review security best practices before proceeding."
+        }
+    },
+    "notes": {
+        "enforcement_types": {
+            "suggest": "Skill suggestion appears but doesn't block execution | 建议但不阻断",
+            "block": "Requires skill to be used before proceeding | 必须使用技能才能继续",
+            "warn": "Shows warning but allows proceeding | 警告但允许继续"
+        },
+        "priority_levels": {
+            "critical": "Highest - Always trigger when matched | 最高优先级",
+            "high": "Important - Trigger for most matches | 高优先级",
+            "medium": "Moderate - Trigger for clear matches | 中等优先级",
+            "low": "Optional - Trigger only for explicit matches | 低优先级"
+        },
+        "bilingual_support": "Keywords and patterns support both Chinese and English for better UX"
+    }
+}
