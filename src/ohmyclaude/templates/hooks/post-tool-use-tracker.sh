@@ -4,29 +4,36 @@ set -e
 # Post-tool-use hook that tracks edited files and their repos
 # This runs after Edit, MultiEdit, or Write tools complete successfully
 
+CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$HOME/project}"
 
 # Read tool information from stdin
 tool_info=$(cat)
 
-
 # Extract relevant data
 tool_name=$(echo "$tool_info" | jq -r '.tool_name // empty')
-file_path=$(echo "$tool_info" | jq -r '.tool_input.file_path // empty')
-session_id=$(echo "$tool_info" | jq -r '.session_id // empty')
+session_id=$(echo "$tool_info" | jq -r '.session_id // "default"')
 
-
-# Skip if not an edit tool or no file path
-if [[ ! "$tool_name" =~ ^(Edit|MultiEdit|Write)$ ]] || [[ -z "$file_path" ]]; then
-    exit 0  # Exit 0 for skip conditions
+# Skip if not an edit tool
+if [[ ! "$tool_name" =~ ^(Edit|MultiEdit|Write)$ ]]; then
+    exit 0
 fi
 
-# Skip markdown files
-if [[ "$file_path" =~ \.(md|markdown)$ ]]; then
-    exit 0  # Exit 0 for skip conditions
+# Collect file paths (support MultiEdit with multiple files)
+mapfile -t file_paths < <(
+    if [[ "$tool_name" == "MultiEdit" ]]; then
+        echo "$tool_info" | jq -r '.tool_input.edits[].file_path // empty'
+    else
+        echo "$tool_info" | jq -r '.tool_input.file_path // empty'
+    fi
+)
+
+# Skip if no file paths
+if [[ ${#file_paths[@]} -eq 0 ]]; then
+    exit 0
 fi
 
 # Create cache directory in project
-cache_dir="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/${session_id:-default}"
+cache_dir="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/$session_id"
 mkdir -p "$cache_dir"
 
 # Function to detect repo from file path
@@ -140,33 +147,35 @@ get_tsc_command() {
     echo ""
 }
 
-# Detect repo
-repo=$(detect_repo "$file_path")
+# Process each file path
+for file_path in "${file_paths[@]}"; do
+    # Skip empty paths
+    [[ -z "$file_path" ]] && continue
 
-# Skip if unknown repo
-if [[ "$repo" == "unknown" ]] || [[ -z "$repo" ]]; then
-    exit 0  # Exit 0 for skip conditions
-fi
+    # Skip markdown files
+    [[ "$file_path" =~ \.(md|markdown)$ ]] && continue
 
-# Log edited file
-echo "$(date +%s):$file_path:$repo" >> "$cache_dir/edited-files.log"
+    # Detect repo
+    repo=$(detect_repo "$file_path")
 
-# Update affected repos list
-if ! grep -q "^$repo$" "$cache_dir/affected-repos.txt" 2>/dev/null; then
-    echo "$repo" >> "$cache_dir/affected-repos.txt"
-fi
+    # Skip if unknown repo
+    [[ -z "$repo" || "$repo" == "unknown" ]] && continue
 
-# Store build commands
-build_cmd=$(get_build_command "$repo")
-tsc_cmd=$(get_tsc_command "$repo")
+    # Log edited file: timestamp, tool, path (tab-delimited for TS reminder)
+    printf "%s\t%s\t%s\n" "$(date +%s)" "$tool_name" "$file_path" >> "$cache_dir/edited-files.log"
 
-if [[ -n "$build_cmd" ]]; then
-    echo "$repo:build:$build_cmd" >> "$cache_dir/commands.txt.tmp"
-fi
+    # Update affected repos list
+    if ! grep -q "^$repo$" "$cache_dir/affected-repos.txt" 2>/dev/null; then
+        echo "$repo" >> "$cache_dir/affected-repos.txt"
+    fi
 
-if [[ -n "$tsc_cmd" ]]; then
-    echo "$repo:tsc:$tsc_cmd" >> "$cache_dir/commands.txt.tmp"
-fi
+    # Store build/tsc commands once per repo
+    build_cmd=$(get_build_command "$repo")
+    tsc_cmd=$(get_tsc_command "$repo")
+
+    [[ -n "$build_cmd" ]] && echo "$repo:build:$build_cmd" >> "$cache_dir/commands.txt.tmp"
+    [[ -n "$tsc_cmd" ]] && echo "$repo:tsc:$tsc_cmd" >> "$cache_dir/commands.txt.tmp"
+done
 
 # Remove duplicates from commands
 if [[ -f "$cache_dir/commands.txt.tmp" ]]; then

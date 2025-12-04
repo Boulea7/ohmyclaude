@@ -84,8 +84,8 @@ async function main() {
         const { session_id } = data;
         const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
-        // Check for edited files tracking
-        const cacheDir = join(process.env.HOME || '/root', '.claude', 'tsc-cache', session_id);
+        // Check for edited files tracking (aligned with post-tool-use tracker)
+        const cacheDir = join(projectDir, '.claude', 'tsc-cache', session_id || 'default');
         const trackingFile = join(cacheDir, 'edited-files.log');
 
         if (!existsSync(trackingFile)) {
@@ -102,7 +102,8 @@ async function main() {
             .map(line => {
                 const [timestamp, tool, path] = line.split('\t');
                 return { timestamp, tool, path };
-            });
+            })
+            .filter(entry => entry.path);
 
         if (editedFiles.length === 0) {
             process.exit(0);

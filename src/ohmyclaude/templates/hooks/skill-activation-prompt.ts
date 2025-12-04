@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 interface HookInput {
@@ -41,8 +41,14 @@ async function main() {
         const prompt = data.prompt.toLowerCase();
 
         // Load skill rules
-        const projectDir = process.env.CLAUDE_PROJECT_DIR || '$HOME/project';
+        const projectDir = process.env.CLAUDE_PROJECT_DIR || (process.env.HOME ? join(process.env.HOME, 'project') : process.cwd());
         const rulesPath = join(projectDir, '.claude', 'skills', 'skill-rules.json');
+
+        // Skip if rules file doesn't exist
+        if (!existsSync(rulesPath)) {
+            process.exit(0);
+        }
+
         const rules: SkillRules = JSON.parse(readFileSync(rulesPath, 'utf-8'));
 
         const matchedSkills: MatchedSkill[] = [];

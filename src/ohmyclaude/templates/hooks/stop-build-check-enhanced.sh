@@ -4,14 +4,16 @@ set -e
 # Stop event hook that runs build checks and provides instructions for error resolution
 # This runs when Claude Code finishes responding
 
+CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$HOME/project}"
+
 # Read event information from stdin
 event_info=$(cat)
 
 # Extract session ID
-session_id=$(echo "$event_info" | jq -r '.session_id // empty')
+session_id=$(echo "$event_info" | jq -r '.session_id // "default"')
 
 # Cache directory in project
-cache_dir="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/${session_id:-default}"
+cache_dir="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/$session_id"
 
 # Check if cache exists
 if [[ ! -d "$cache_dir" ]]; then

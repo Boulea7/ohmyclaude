@@ -5,8 +5,8 @@
 
 CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$HOME/project}"
 HOOK_INPUT=$(cat)
-SESSION_ID="${session_id:-default}"
-CACHE_DIR="$HOME/.claude/tsc-cache/$SESSION_ID"
+SESSION_ID=$(echo "$HOOK_INPUT" | jq -r '.session_id // "default"')
+CACHE_DIR="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/$SESSION_ID"
 
 # Create cache directory
 mkdir -p "$CACHE_DIR"
@@ -168,6 +168,6 @@ $CHECK_OUTPUT"
 esac
 
 # Cleanup old cache directories (older than 7 days)
-find "$HOME/.claude/tsc-cache" -maxdepth 1 -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
+find "$CLAUDE_PROJECT_DIR/.claude/tsc-cache" -maxdepth 1 -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
 
 exit 0
