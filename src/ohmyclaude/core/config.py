@@ -11,7 +11,7 @@ from jinja2 import Environment, FileSystemLoader, PackageLoader, StrictUndefined
 from ruamel.yaml import YAML
 
 from ohmyclaude.core.merge import deep_merge
-from ohmyclaude.core.paths import get_presets_dir, get_project_templates_dir
+from ohmyclaude.core.paths import CLAUDE_DIR, get_presets_dir, get_project_templates_dir
 from ohmyclaude.models.presets import PresetConfig
 from ohmyclaude.models.settings import McpServerConfig, SettingsConfig
 
@@ -133,7 +133,13 @@ class ConfigEngine:
         settings_dict: dict[str, Any] = {
             "model": preset.model,
             "alwaysThinkingEnabled": preset.always_thinking_enabled,
-            "env": {},
+            "env": {
+                # OHMYCLAUDE_ROOT points to ~/.claude where hooks are installed.
+                # This is different from shell.py's OHMYCLAUDE_ROOT (~/.ohmyclaude)
+                # which is for OhMyClaude CLI tools. Claude Code reads this env
+                # from settings.json when executing hooks.
+                "OHMYCLAUDE_ROOT": str(CLAUDE_DIR),
+            },
             "permissions": {
                 "additionalDirectories": [],
                 "allow": [],

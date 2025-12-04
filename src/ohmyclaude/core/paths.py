@@ -52,6 +52,7 @@ def ensure_claude_dirs() -> None:
     """Ensure Claude Code directories exist."""
     CLAUDE_DIR.mkdir(parents=True, exist_ok=True)
     COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
+    HOOKS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def ensure_ohmyclaude_dirs() -> None:

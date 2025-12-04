@@ -116,6 +116,7 @@ class Installer:
         self._install_settings()
         self._install_claude_md()
         self._install_commands()
+        self._install_hooks()
 
         if not skip_mcp:
             self._install_mcp()
@@ -227,6 +228,87 @@ class Installer:
                 self.result.add_error(
                     item_type="command",
                     name=cmd_name,
+                    error=str(e),
+                )
+
+    def _install_hooks(self) -> None:
+        """Install hook scripts to ~/.claude/hooks/.
+
+        Copies hook scripts from templates based on hooks_preset:
+        - basic: No scripts (inline commands only)
+        - standard: No scripts (inline commands only)
+        - full: All hook scripts for advanced workflows
+        """
+        # Define which scripts each preset needs
+        preset_scripts: dict[str, list[str]] = {
+            "basic": [],
+            "standard": [],
+            "full": [
+                "skill-activation-prompt.ts",
+                "skill-activation-prompt.sh",
+                "post-tool-use-tracker.sh",
+                "tsc-check.sh",
+                "stop-build-check-enhanced.sh",
+                "trigger-build-resolver.sh",
+                "error-handling-reminder.ts",
+                "error-handling-reminder.sh",
+            ],
+        }
+
+        hooks_preset = self.preset.hooks_preset
+
+        # Warn if hooks_preset is unknown
+        if hooks_preset not in preset_scripts:
+            self.result.add_skipped(
+                item_type="hook",
+                name=f"hooks_preset:{hooks_preset}",
+                reason=f"Unknown hooks preset '{hooks_preset}', expected one of: {list(preset_scripts.keys())}",
+            )
+            return
+
+        scripts_to_install = preset_scripts[hooks_preset]
+
+        if not scripts_to_install:
+            return
+
+        hooks_templates = self.templates_dir / "hooks"
+        if not hooks_templates.exists():
+            self.result.add_error(
+                item_type="hook",
+                name="hooks_templates",
+                error=f"Hooks templates directory not found: {hooks_templates}",
+            )
+            return
+
+        HOOKS_DIR.mkdir(parents=True, exist_ok=True)
+
+        for script_name in scripts_to_install:
+            try:
+                src = hooks_templates / script_name
+                if not src.exists():
+                    self.result.add_skipped(
+                        item_type="hook",
+                        name=script_name,
+                        reason="Template not found",
+                    )
+                    continue
+
+                dst = HOOKS_DIR / script_name
+                shutil.copy2(src, dst)
+
+                # Set executable permission for shell scripts (controlled chmod)
+                if script_name.endswith(".sh"):
+                    dst.chmod(0o755)
+
+                self.result.add_installed(
+                    item_type="hook",
+                    name=script_name,
+                    path=str(dst),
+                )
+            except Exception as e:
+                self.result.add_error(
+                    item_type="hook",
+                    name=script_name,
                     error=str(e),
                 )
 
