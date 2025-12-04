@@ -13,8 +13,10 @@ from ohmyclaude.core.shell import ShellIntegration, get_shell_info
 # Phase 2 - Configuration management
 from ohmyclaude.core.paths import (
     CLAUDE_DIR,
+    CLAUDE_MD_FILE,
     SETTINGS_FILE,
     COMMANDS_DIR,
+    HOOKS_DIR,
     OHMYCLAUDE_DIR,
     BACKUPS_DIR,
     ensure_claude_dirs,
@@ -38,8 +40,10 @@ __all__ = [
     "get_shell_info",
     # Path constants
     "CLAUDE_DIR",
+    "CLAUDE_MD_FILE",
     "SETTINGS_FILE",
     "COMMANDS_DIR",
+    "HOOKS_DIR",
     "OHMYCLAUDE_DIR",
     "BACKUPS_DIR",
     "ensure_claude_dirs",

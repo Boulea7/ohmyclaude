@@ -3,11 +3,28 @@
 This module provides the main command-line interface using Click.
 """
 
+import shutil
+import tarfile
+import tempfile
+from pathlib import Path
+
 import click
 from rich.console import Console
+from rich.table import Table
 
 from ohmyclaude import __version__
+from ohmyclaude.core import (
+    BackupManager,
+    ConfigEngine,
+    Installer,
+    ShellIntegration,
+    CLAUDE_MD_FILE,
+    COMMANDS_DIR,
+    HOOKS_DIR,
+    SETTINGS_FILE,
+)
 from ohmyclaude.ui.logo import show_logo, show_welcome, show_goodbye
+from ohmyclaude.ui.prompts import select_preset
 
 console = Console()
 
@@ -55,14 +72,93 @@ def setup(preset: str | None, no_interactive: bool) -> None:
     show_logo()
     show_welcome()
 
+    # 1. Select preset (interactively or from option)
     if preset:
-        console.print(f"[blue]Selected preset: {preset}[/]")
+        console.print(f"[blue]Using preset: {preset}[/]\n")
+    elif no_interactive:
+        preset = "standard"
+        console.print(f"[blue]Using default preset: {preset}[/]\n")
     else:
-        console.print("[dim]Run with --preset to skip interactive selection[/]")
+        console.print("[dim]Tip: Use --preset / -p to skip this selection[/]\n")
+        preset = select_preset()
+        console.print()
 
-    # TODO: Implement actual setup logic in Phase 2
-    console.print("\n[yellow]Setup wizard not yet implemented.[/]")
-    console.print("[dim]This will be completed in Phase 2.[/]")
+    # 2. Load preset configuration
+    try:
+        engine = ConfigEngine()
+        preset_config = engine.load_preset(preset)
+    except FileNotFoundError as e:
+        console.print(f"[red]Error: {e}[/]")
+        raise SystemExit(1)
+
+    # 3. Create backup if existing config
+    backup_mgr = BackupManager()
+    if SETTINGS_FILE.exists():
+        backup_path = backup_mgr.create_backup(tag="pre-setup")
+        console.print(f"[dim]Backed up existing config to: {backup_path.name}[/]\n")
+
+    # 4. Install configuration
+    console.print("[bold]Installing configuration...[/]\n")
+    installer = Installer(preset_config, engine)
+    result = installer.install()
+
+    # 5. Show results
+    _show_install_result(result)
+
+    # 6. Show next steps
+    console.print("\n[green bold]Configuration complete![/]")
+    console.print()
+    console.print("[bold]Next steps:[/]")
+    console.print("  1. Run [cyan]omc doctor[/] to verify configuration")
+    console.print("  2. Run [cyan]omc init[/] to configure shell environment")
+    console.print("  3. Restart Claude Code to apply changes")
+
+
+def _show_install_result(result: dict) -> None:
+    """Display installation result in a table."""
+    table = Table(title="Installation Summary", show_header=True, header_style="bold")
+    table.add_column("Category", style="cyan")
+    table.add_column("Installed", style="green")
+    table.add_column("Skipped", style="yellow")
+    table.add_column("Errors", style="red")
+
+    # Count by category
+    installed = result.get("installed", [])
+    skipped = result.get("skipped", [])
+    errors = result.get("errors", [])
+
+    categories = {}
+    for item in installed:
+        cat = item.get("type", "other")
+        categories.setdefault(cat, {"installed": 0, "skipped": 0, "errors": 0})
+        categories[cat]["installed"] += 1
+
+    for item in skipped:
+        cat = item.get("type", "other")
+        categories.setdefault(cat, {"installed": 0, "skipped": 0, "errors": 0})
+        categories[cat]["skipped"] += 1
+
+    for item in errors:
+        cat = item.get("type", "other")
+        categories.setdefault(cat, {"installed": 0, "skipped": 0, "errors": 0})
+        categories[cat]["errors"] += 1
+
+    # Add rows
+    for cat, counts in sorted(categories.items()):
+        table.add_row(
+            cat,
+            str(counts["installed"]) if counts["installed"] else "-",
+            str(counts["skipped"]) if counts["skipped"] else "-",
+            str(counts["errors"]) if counts["errors"] else "-",
+        )
+
+    console.print(table)
+
+    # Show error details if any
+    if errors:
+        console.print("\n[red bold]Errors:[/]")
+        for err in errors:
+            console.print(f"  [red]• {err.get('name')}: {err.get('error')}[/]")
 
 
 @cli.command()
@@ -75,9 +171,77 @@ def doctor() -> None:
     show_logo(show_tagline=False)
     console.print("[bold]Running health check...[/]\n")
 
-    # TODO: Implement actual health check in Phase 2
-    console.print("[yellow]Doctor command not yet implemented.[/]")
-    console.print("[dim]This will be completed in Phase 2.[/]")
+    checks: list[tuple[str, str, str]] = []
+
+    # 1. Check settings.json
+    if SETTINGS_FILE.exists():
+        checks.append(("settings.json", "[green]OK[/]", str(SETTINGS_FILE)))
+    else:
+        checks.append(("settings.json", "[red]Missing[/]", "Run: omc setup"))
+
+    # 2. Check CLAUDE.md
+    if CLAUDE_MD_FILE.exists():
+        checks.append(("CLAUDE.md", "[green]OK[/]", str(CLAUDE_MD_FILE)))
+    else:
+        checks.append(("CLAUDE.md", "[yellow]Missing[/]", "Optional"))
+
+    # 3. Check Shell integration
+    shell = ShellIntegration()
+    if shell.is_installed():
+        checks.append(("Shell Integration", "[green]OK[/]", f"{shell.shell} ({shell.rc_path})"))
+    else:
+        checks.append(("Shell Integration", "[yellow]Not configured[/]", "Run: omc init"))
+
+    # 4. Check commands directory
+    if COMMANDS_DIR.exists():
+        cmd_count = len(list(COMMANDS_DIR.glob("*.md")))
+        if cmd_count > 0:
+            checks.append(("Slash Commands", "[green]OK[/]", f"{cmd_count} command(s)"))
+        else:
+            checks.append(("Slash Commands", "[yellow]Empty[/]", "No commands installed"))
+    else:
+        checks.append(("Slash Commands", "[yellow]Missing[/]", "Directory not found"))
+
+    # 5. Check hooks directory
+    if HOOKS_DIR.exists():
+        hook_count = len(list(HOOKS_DIR.glob("*")))
+        if hook_count > 0:
+            checks.append(("Hooks", "[green]OK[/]", f"{hook_count} hook(s)"))
+        else:
+            checks.append(("Hooks", "[dim]Empty[/]", "No hooks installed"))
+    else:
+        checks.append(("Hooks", "[dim]Missing[/]", "Directory not found"))
+
+    # 6. Check backups
+    backup_mgr = BackupManager()
+    backups = backup_mgr.list_backups()
+    if backups:
+        checks.append(("Backups", "[green]OK[/]", f"{len(backups)} backup(s)"))
+    else:
+        checks.append(("Backups", "[dim]None[/]", "No backups yet"))
+
+    # Display results table
+    table = Table(title="OhMyClaude Health Check", show_header=True, header_style="bold")
+    table.add_column("Component", style="cyan")
+    table.add_column("Status")
+    table.add_column("Details", style="dim")
+
+    for name, status, detail in checks:
+        table.add_row(name, status, detail)
+
+    console.print(table)
+
+    # Summary
+    ok_count = sum(1 for _, status, _ in checks if "OK" in status)
+    total = len(checks)
+
+    console.print()
+    if ok_count == total:
+        console.print("[green bold]All checks passed![/]")
+    elif ok_count >= total // 2:
+        console.print(f"[yellow]{ok_count}/{total} checks passed. Some optional components missing.[/]")
+    else:
+        console.print(f"[red]{ok_count}/{total} checks passed. Run 'omc setup' to configure.[/]")
 
 
 @cli.command()
@@ -230,10 +394,58 @@ def export_config(output: str) -> None:
     Creates a backup of your Claude Code configuration that can be
     imported on another machine or shared with team members.
     """
-    console.print(f"[blue]Exporting configuration to: {output}[/]")
+    output_path = Path(output)
 
-    # TODO: Implement in Phase 2
-    console.print("\n[yellow]Export command not yet implemented.[/]")
+    # Normalize to .tar.gz suffix
+    if output_path.suffix == ".tgz":
+        pass  # Keep .tgz as-is
+    elif not str(output_path).endswith(".tar.gz"):
+        output_path = Path(str(output_path).rstrip(".tar").rstrip(".gz") + ".tar.gz")
+
+    console.print(f"[blue]Exporting configuration to: {output_path}[/]\n")
+
+    # Ensure parent directory exists
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Check if there's anything to export
+    if not SETTINGS_FILE.exists():
+        console.print("[yellow]No configuration found. Run 'omc setup' first.[/]")
+        raise SystemExit(1)
+
+    # Create temporary backup
+    backup_mgr = BackupManager()
+    backup_path = backup_mgr.create_backup(tag="export")
+
+    # Create tar.gz archive
+    try:
+        with tarfile.open(output_path, "w:gz") as tar:
+            tar.add(backup_path, arcname=backup_path.name)
+
+        console.print(f"[green]Configuration exported to: {output_path}[/]")
+        console.print(f"[dim]Archive contains: settings.json, CLAUDE.md, commands/[/]")
+    except Exception as e:
+        console.print(f"[red]Export failed: {e}[/]")
+        raise SystemExit(1)
+    finally:
+        # Always clean up temporary backup
+        backup_mgr.delete_backup(backup_path.name)
+
+
+def _safe_extract_tar(tar: tarfile.TarFile, dest: Path) -> None:
+    """Safely extract tar archive with path traversal protection."""
+    dest = dest.resolve()
+    for member in tar.getmembers():
+        # Check for path traversal attacks
+        member_path = (dest / member.name).resolve()
+        if not str(member_path).startswith(str(dest)):
+            raise ValueError(f"Path traversal detected: {member.name}")
+        # Reject symlinks and other dangerous file types
+        if member.issym() or member.islnk():
+            raise ValueError(f"Symbolic links not allowed: {member.name}")
+        if member.isdev() or member.ischr() or member.isblk():
+            raise ValueError(f"Device files not allowed: {member.name}")
+    # Extract all members (after validation)
+    tar.extractall(dest)
 
 
 @cli.command("import")
@@ -243,10 +455,85 @@ def import_config(input_file: str) -> None:
 
     Restores Claude Code configuration from a previously exported file.
     """
-    console.print(f"[blue]Importing configuration from: {input_file}[/]")
+    input_path = Path(input_file)
+    console.print(f"[blue]Importing configuration from: {input_path}[/]\n")
 
-    # TODO: Implement in Phase 2
-    console.print("\n[yellow]Import command not yet implemented.[/]")
+    # Verify it's a valid tar.gz file
+    if not (str(input_path).endswith(".tar.gz") or str(input_path).endswith(".tgz")):
+        console.print("[red]Error: Expected a .tar.gz or .tgz file[/]")
+        raise SystemExit(1)
+
+    if not tarfile.is_tarfile(input_path):
+        console.print("[red]Error: Not a valid tar archive[/]")
+        raise SystemExit(1)
+
+    backup_mgr = BackupManager()
+    pre_backup_name: str | None = None
+
+    # Create pre-import backup if existing config
+    if SETTINGS_FILE.exists():
+        pre_backup = backup_mgr.create_backup(tag="pre-import")
+        pre_backup_name = pre_backup.name
+        console.print(f"[dim]Backed up existing config to: {pre_backup_name}[/]\n")
+
+    # Extract to temporary directory
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+
+            # Safely extract archive
+            with tarfile.open(input_path, "r:gz") as tar:
+                _safe_extract_tar(tar, tmpdir_path)
+
+            # Find the extracted backup directory
+            extracted_dirs = [d for d in tmpdir_path.iterdir() if d.is_dir()]
+            if not extracted_dirs:
+                raise ValueError("Archive contains no directories")
+
+            # Find the backup directory (should contain settings.json or metadata.json)
+            extracted = None
+            for d in extracted_dirs:
+                if (d / "settings.json").exists() or (d / "metadata.json").exists():
+                    extracted = d
+                    break
+
+            if not extracted:
+                raise ValueError("Archive does not contain a valid OhMyClaude backup")
+
+            # Copy to backups directory and restore
+            dest = backup_mgr.backups_dir / extracted.name
+            if dest.exists():
+                shutil.rmtree(dest)
+            shutil.copytree(extracted, dest)
+
+            # Restore from the imported backup
+            backup_mgr.restore_backup(extracted.name, confirm=False)
+
+        console.print("[green]Configuration imported successfully![/]")
+        console.print("[dim]Run 'omc doctor' to verify the configuration.[/]")
+
+    except (tarfile.TarError, ValueError) as e:
+        console.print(f"[red]Error: {e}[/]")
+        # Rollback to pre-import backup if available
+        if pre_backup_name:
+            console.print("[yellow]Rolling back to previous configuration...[/]")
+            try:
+                backup_mgr.restore_backup(pre_backup_name, confirm=False)
+                console.print("[dim]Rollback complete.[/]")
+            except Exception:
+                console.print("[red]Rollback failed. Manual recovery may be needed.[/]")
+        raise SystemExit(1)
+    except Exception as e:
+        console.print(f"[red]Import failed: {e}[/]")
+        # Rollback to pre-import backup if available
+        if pre_backup_name:
+            console.print("[yellow]Rolling back to previous configuration...[/]")
+            try:
+                backup_mgr.restore_backup(pre_backup_name, confirm=False)
+                console.print("[dim]Rollback complete.[/]")
+            except Exception:
+                console.print("[red]Rollback failed. Manual recovery may be needed.[/]")
+        raise SystemExit(1)
 
 
 @cli.command()
