@@ -586,36 +586,36 @@ def switch(provider: str):
 
 ---
 
-### Phase 8: CodexMCP 集成
+### Phase 8: CodexMCP 集成 ✅ 完成
 
 **目标**: 实现可选的 CodexMCP 协作功能
 
 **任务清单**:
 
-| 任务 | 描述 | 优先级 | 依赖 |
+| 任务 | 描述 | 优先级 | 状态 |
 |------|------|--------|------|
-| P8-1 | 实现 CodexMCP 自动安装 | P0 | P3 |
-| P8-2 | 生成协作协议到 CLAUDE.md | P0 | P2 |
-| P8-3 | 添加 /codex 命令 | P0 | P4 |
-| P8-4 | 配置 MCP 权限 | P1 | P8-1 |
+| P8-1 | 实现 CodexMCP 自动安装 | P0 | ✅ 完成 |
+| P8-2 | 生成协作协议到 CLAUDE.md | P0 | ✅ 完成 |
+| P8-3 | 添加 /codex 命令 | P0 | ✅ 完成 |
+| P8-4 | 配置 MCP 权限 | P1 | ✅ 完成 |
 
-**实现逻辑**:
-```python
-def install_codex():
-    # 1. Check if Codex CLI is installed
-    if not is_codex_installed():
-        console.print("[yellow]Codex CLI 未安装，跳过 CodexMCP[/]")
-        return
+**关键产出**:
+- [x] CodexMCP 包定义 (`mcp_packages.yaml:71-81`)
+- [x] Codex CLI 检测 (`mcp.py:359-364`)
+- [x] /codex 命令模板 (`commands/codex.md.j2`, 119行)
+- [x] CLAUDE.md 协作协议 (`claude_md/full.md.j2:102-140`)
+- [x] Codex auth.json 同步 (`provider.py:229-276`)
+- [x] 完整参考文档 (`REFERENCE_CODEXMCP.md`, 424行)
 
-    # 2. Install CodexMCP via claude mcp add
-    run_command("claude mcp add codex -s user ...")
+**预设支持**:
 
-    # 3. Add collaboration protocol to CLAUDE.md
-    append_to_claude_md(CODEX_PROTOCOL_TEMPLATE)
+| 预设 | include_codex | codex MCP包 | /codex 命令 |
+|-----|--------------|-------------|-------------|
+| starter | false | ❌ | ❌ |
+| standard | false | ✅ | ✅ |
+| full | **true** | ✅ | ✅ |
 
-    # 4. Add /codex command
-    install_command("codex")
-```
+**备注**: Phase 8 功能已在 Phase 3 (MCP) 和 Phase 4 (命令) 开发中提前完成
 
 ---
 
@@ -815,7 +815,7 @@ def install_codex():
 - [x] Phase 2.7: CLI 命令集成 (setup/doctor/export/import, 安全提取, 回滚机制) ✅ (2024-12-04)
 - [x] Phase 6: API 供应商切换 (4供应商, switch/provider命令, Codex同步, 备份机制) ✅ (2024-12-06)
 - [x] Phase 7: Subagent 配置 (10代理模板, 预设级别分配, 路径安全保护) ✅ (2024-12-07)
-- [ ] Phase 8: CodexMCP 集成成功
+- [x] Phase 8: CodexMCP 集成 (MCP包, /codex命令, 协作协议, auth同步) ✅ (2024-12-07)
 - [ ] Phase 9: 测试覆盖 > 80%，文档完整
 - [ ] Phase 10: PyPI 发布成功，install.sh 可用
 
