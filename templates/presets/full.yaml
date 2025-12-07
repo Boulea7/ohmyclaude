@@ -63,7 +63,7 @@ agents:
   # Professional agents (from showcase)
   - code-architecture-reviewer  # Architecture review
   - auto-error-resolver         # Automatic error resolution
-  - refactor-planner            # Refactoring planning
+  - web-research-specialist     # Web research and information gathering
   - documentation-architect     # Documentation architecture
   - plan-reviewer               # Plan review and validation
 

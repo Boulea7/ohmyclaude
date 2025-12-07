@@ -12,6 +12,7 @@ from typing import Any
 from ohmyclaude.core.atomic import atomic_write, save_json
 from ohmyclaude.core.config import ConfigEngine
 from ohmyclaude.core.paths import (
+    AGENTS_DIR,
     CLAUDE_DIR,
     CLAUDE_MD_FILE,
     COMMANDS_DIR,
@@ -117,6 +118,7 @@ class Installer:
         self._install_claude_md()
         self._install_commands()
         self._install_hooks()
+        self._install_agents()
 
         if not skip_mcp:
             self._install_mcp()
@@ -322,6 +324,55 @@ class Installer:
         # This method can be used for additional MCP setup like
         # installing npm packages, creating env files, etc.
         pass
+
+    def _install_agents(self) -> None:
+        """Install agent templates to ~/.claude/agents/.
+
+        Copies agent markdown files from templates based on preset.agents list.
+        Each agent template is a standalone markdown file with YAML front matter.
+        """
+        if not self.preset.agents:
+            return
+
+        AGENTS_DIR.mkdir(parents=True, exist_ok=True)
+
+        agents_source = self.templates_dir / "agents-showcase"
+        if not agents_source.exists():
+            self.result.add_skipped(
+                item_type="agent",
+                name="agents-showcase",
+                reason=f"Agents templates directory not found: {agents_source}",
+            )
+            return
+
+        for agent_name in self.preset.agents:
+            try:
+                # Validate agent name to prevent path traversal
+                safe_name = self._safe_segment(agent_name, "agent")
+
+                src_file = agents_source / f"{safe_name}.md"
+                if not src_file.exists():
+                    self.result.add_skipped(
+                        item_type="agent",
+                        name=agent_name,
+                        reason="Template not found",
+                    )
+                    continue
+
+                dst_file = AGENTS_DIR / f"{safe_name}.md"
+                shutil.copy2(src_file, dst_file)
+
+                self.result.add_installed(
+                    item_type="agent",
+                    name=agent_name,
+                    path=str(dst_file),
+                )
+            except Exception as e:
+                self.result.add_error(
+                    item_type="agent",
+                    name=agent_name,
+                    error=str(e),
+                )
 
     @staticmethod
     def _safe_segment(value: str, label: str) -> str:

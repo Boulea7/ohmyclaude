@@ -53,6 +53,7 @@ def ensure_claude_dirs() -> None:
     CLAUDE_DIR.mkdir(parents=True, exist_ok=True)
     COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
     HOOKS_DIR.mkdir(parents=True, exist_ok=True)
+    AGENTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def ensure_ohmyclaude_dirs() -> None:
