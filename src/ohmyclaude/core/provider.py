@@ -53,6 +53,9 @@ class ProviderSwitcher:
         if not PROVIDERS_FILE.exists():
             return
 
+        # Clear existing custom providers to handle file updates
+        self._custom_providers.clear()
+
         try:
             import yaml
 
@@ -65,8 +68,18 @@ class ProviderSwitcher:
                     is_builtin=False,
                     **config,
                 )
-        except Exception:
-            pass  # Silently ignore errors loading custom providers
+        except yaml.YAMLError as e:
+            from rich.console import Console
+
+            Console(stderr=True).print(
+                f"[yellow]Warning: Failed to parse {PROVIDERS_FILE}: {e}[/]"
+            )
+        except Exception as e:
+            from rich.console import Console
+
+            Console(stderr=True).print(
+                f"[yellow]Warning: Failed to load custom providers: {e}[/]"
+            )
 
     def get_all_providers(self) -> dict[str, ProviderConfig]:
         """Get all available providers (built-in + custom).
@@ -95,6 +108,12 @@ class ProviderSwitcher:
         """
         settings = self._load_json(SETTINGS_FILE)
         env = settings.get("env", {})
+
+        # Check for stored provider marker (handles OpenAI-only providers like deepseek)
+        stored_provider = env.get("_OHMYCLAUDE_PROVIDER")
+        if stored_provider:
+            return stored_provider
+
         base_url = env.get("ANTHROPIC_BASE_URL")
 
         # No base URL means official
@@ -128,13 +147,15 @@ class ProviderSwitcher:
         """
         # 1. Get provider configuration
         provider = self.get_provider(provider_name)
-        if not provider and not (token and base_url):
+
+        # Fix #3: Relax validation - only require base_url for custom providers
+        if not provider and not base_url:
             return SwitchResult(
                 success=False,
                 provider_name=provider_name,
                 message=(
                     f"Unknown provider: {provider_name}. "
-                    "Use --token and --base-url for custom provider."
+                    "Use --base-url for custom provider."
                 ),
             )
 
@@ -146,6 +167,18 @@ class ProviderSwitcher:
                 anthropic_base_url=base_url or "",
                 anthropic_token_env="CUSTOM_AUTH_TOKEN",
                 is_builtin=False,
+            )
+
+        # Fix #1: Validate token availability (except for official which may use default)
+        effective_token = token or os.environ.get(provider.anthropic_token_env)
+        if not effective_token and provider_name != "official":
+            return SwitchResult(
+                success=False,
+                provider_name=provider_name,
+                message=(
+                    f"Token not found. Set environment variable "
+                    f"{provider.anthropic_token_env} or use --token option."
+                ),
             )
 
         # Get current provider for result
@@ -164,10 +197,14 @@ class ProviderSwitcher:
         if base_url:
             env_updates["ANTHROPIC_BASE_URL"] = base_url
 
-        # Clean up keys from previous provider
-        for key in get_cleanup_keys(provider_name):
-            if key not in env_updates:
-                env_updates[key] = None  # Mark for deletion
+        # Store provider marker for tracking (Fix #2 support)
+        env_updates["_OHMYCLAUDE_PROVIDER"] = provider_name
+
+        # Clean up keys from previous provider (not target provider)
+        if previous_provider:
+            for key in get_cleanup_keys(previous_provider):
+                if key not in env_updates:
+                    env_updates[key] = None  # Mark for deletion
 
         settings = self._apply_env(settings, env_updates)
         save_json(SETTINGS_FILE, settings)
@@ -201,10 +238,10 @@ class ProviderSwitcher:
             token_override: Optional token override
 
         Returns:
-            Dict with 'updated' bool and optional 'backup' path
+            Dict with 'updated' bool, optional 'backup' path, and 'reason' on failure
         """
         if not provider.openai_base_url:
-            return {"updated": False}
+            return {"updated": False, "reason": "no_openai_url"}
 
         # Determine OpenAI token (priority: override > openai env > anthropic env)
         openai_token = token_override
@@ -214,7 +251,11 @@ class ProviderSwitcher:
             openai_token = os.environ.get(provider.anthropic_token_env)
 
         if not openai_token:
-            return {"updated": False}
+            return {
+                "updated": False,
+                "reason": "missing_token",
+                "env_var": provider.openai_token_env or provider.anthropic_token_env,
+            }
 
         # Ensure directory exists
         CODEX_AUTH_FILE.parent.mkdir(parents=True, exist_ok=True)

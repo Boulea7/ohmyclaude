@@ -10,11 +10,15 @@ from typing import Optional
 from ohmyclaude.models.provider import ProviderConfig
 
 
-# Keys to clean up when switching to specific providers
+# Keys to clean up when switching FROM specific providers
 # These keys are provider-specific and should be removed when switching away
 CLEANUP_KEYS: dict[str, set[str]] = {
     "official": {
         "ANTHROPIC_BASE_URL",
+        "API_TIMEOUT_MS",
+        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    },
+    "glm": {
         "API_TIMEOUT_MS",
         "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
     },
