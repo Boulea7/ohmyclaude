@@ -1,9 +1,16 @@
 """Hybrid credential management with fallback chain.
 
-This module provides secure credential storage with multiple backend support:
+This module provides credential storage with multiple backend support:
 1. Environment variables (highest priority)
 2. System keyring (macOS Keychain, Windows Credential Locker, Linux Secret Service)
-3. Encrypted file (for headless environments)
+3. Local file with Base64 encoding (fallback for headless environments)
+
+SECURITY WARNING:
+- The local file fallback (level 3) uses Base64 encoding ONLY for basic obfuscation.
+- Base64 is NOT encryption and provides NO security guarantee.
+- Anyone with file access can trivially decode stored credentials.
+- For sensitive environments, always prefer system keyring (level 2) or env vars (level 1).
+- The .secrets file is protected with 0600 permissions but this is defense-in-depth only.
 """
 
 from pathlib import Path
@@ -160,6 +167,10 @@ class CredentialManager:
     def _set_to_file(self, key: str, value: str) -> bool:
         """Write credential to local secrets file.
 
+        WARNING: This method uses Base64 encoding which provides NO security.
+        It is only a fallback for environments without system keyring support.
+        Prefer system keyring or environment variables for sensitive credentials.
+
         Args:
             key: Credential key
             value: Credential value
@@ -169,7 +180,7 @@ class CredentialManager:
         """
         try:
             secrets = self._load_secrets_file()
-            # Base64 encode for basic obfuscation (not encryption)
+            # Base64 encode for basic obfuscation (NOT encryption - see module docstring)
             secrets[key] = base64.b64encode(value.encode("utf-8")).decode("ascii")
             self._save_secrets_file(secrets)
             return True

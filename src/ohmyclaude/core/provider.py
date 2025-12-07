@@ -74,11 +74,11 @@ class ProviderSwitcher:
             Console(stderr=True).print(
                 f"[yellow]Warning: Failed to parse {PROVIDERS_FILE}: {e}[/]"
             )
-        except Exception as e:
+        except OSError as e:
             from rich.console import Console
 
             Console(stderr=True).print(
-                f"[yellow]Warning: Failed to load custom providers: {e}[/]"
+                f"[yellow]Warning: Failed to read {PROVIDERS_FILE}: {e}[/]"
             )
 
     def get_all_providers(self) -> dict[str, ProviderConfig]:
@@ -309,7 +309,12 @@ class ProviderSwitcher:
 
                 with open(PROVIDERS_FILE, "r", encoding="utf-8") as f:
                     providers_data = yaml.safe_load(f) or {}
-            except Exception:
+            except (OSError, yaml.YAMLError) as e:
+                from rich.console import Console
+
+                Console(stderr=True).print(
+                    f"[yellow]Warning: Failed to load existing providers, starting fresh: {e}[/]"
+                )
                 providers_data = {}
 
         # Add new provider
@@ -338,7 +343,12 @@ class ProviderSwitcher:
             # Reload custom providers
             self._load_custom_providers()
             return True
-        except Exception:
+        except (OSError, yaml.YAMLError) as e:
+            from rich.console import Console
+
+            Console(stderr=True).print(
+                f"[red]Failed to save provider config: {e}[/]"
+            )
             return False
 
     def _load_json(self, path: Path) -> dict:

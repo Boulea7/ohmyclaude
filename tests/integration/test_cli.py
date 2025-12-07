@@ -39,9 +39,10 @@ class TestCLIBasic:
         """Test CLI with no arguments shows usage."""
         result = runner.invoke(cli, [])
 
-        # Click group without args shows usage and exits with code 0 or 2
-        # depending on how it's configured
-        assert result.exit_code in (0, 2)
+        # Click group without args shows help/usage and exits with code 0 or 2
+        # Code 2 is standard Click behavior for missing required command
+        assert result.exit_code in (0, 2), f"Unexpected exit code: {result.exit_code}"
+        assert "Usage:" in result.output or "ohmyclaude" in result.output.lower()
 
 
 class TestSetupCommand:
@@ -93,8 +94,10 @@ class TestSetupCommand:
                                                     with patch("ohmyclaude.core.backup.SETTINGS_FILE", temp_env["SETTINGS_FILE"]):
                                                         result = runner.invoke(cli, ["setup", "-p", "starter"])
 
-                                                        # Should complete (exit code 0 or 1 acceptable for test)
-                                                        assert "Error" not in result.output or result.exit_code == 0
+                                                        # Should complete successfully
+                                                        assert result.exit_code == 0, f"Setup failed: {result.output}"
+                                                        # Note: "Errors" appears in table header, check for actual errors
+                                                        assert "Configuration complete" in result.output
 
 
 class TestDoctorCommand:
