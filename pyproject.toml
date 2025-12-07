@@ -90,3 +90,8 @@ branch = true
 # Hatchling configuration
 [tool.hatch.build.targets.wheel]
 packages = ["src/ohmyclaude"]
+
+[dependency-groups]
+dev = [
+    "pytest-cov>=7.0.0",
+]
