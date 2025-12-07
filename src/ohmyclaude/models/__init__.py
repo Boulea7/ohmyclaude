@@ -18,6 +18,11 @@ from ohmyclaude.models.presets import (
     PresetConfig,
     ResourceEstimates,
 )
+from ohmyclaude.models.provider import (
+    CustomProviderConfig,
+    ProviderConfig,
+    SwitchResult,
+)
 
 __all__ = [
     # Settings models
@@ -33,4 +38,8 @@ __all__ = [
     "HookPreset",
     "HookMatcherPreset",
     "ResourceEstimates",
+    # Provider models
+    "ProviderConfig",
+    "CustomProviderConfig",
+    "SwitchResult",
 ]

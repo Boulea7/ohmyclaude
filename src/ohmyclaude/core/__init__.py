@@ -25,6 +25,7 @@ from ohmyclaude.core.paths import (
 from ohmyclaude.core.config import ConfigEngine
 from ohmyclaude.core.backup import BackupManager
 from ohmyclaude.core.installer import Installer, InstallResult
+from ohmyclaude.core.provider import ProviderSwitcher
 
 __all__ = [
     # Atomic file operations
@@ -55,4 +56,6 @@ __all__ = [
     # Installer
     "Installer",
     "InstallResult",
+    # Provider switcher
+    "ProviderSwitcher",
 ]

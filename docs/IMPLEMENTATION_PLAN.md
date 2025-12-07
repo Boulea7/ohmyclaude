@@ -799,7 +799,8 @@ def install_codex():
 - [x] Phase 3: MCP 包管理系统 (10包, 14服务器, 智谱AI可选付费) ✅ (2024-12-04)
 - [x] Phase 4: 斜杠命令模板 (7个命令, 双语支持, Codex审查) ✅ (2024-12-04)
 - [x] Phase 5: Hooks 系统 (脚本安装, OHMYCLAUDE_ROOT 环境变量, Codex审查) ✅ (2024-12-04)
-- [ ] Phase 6: API 供应商切换功能正常，备份机制有效
+- [x] Phase 2.7: CLI 命令集成 (setup/doctor/export/import, 安全提取, 回滚机制) ✅ (2024-12-04)
+- [x] Phase 6: API 供应商切换 (4供应商, switch/provider命令, Codex同步, 备份机制) ✅ (2024-12-06)
 - [ ] Phase 7: Subagent 配置正确
 - [ ] Phase 8: CodexMCP 集成成功
 - [ ] Phase 9: 测试覆盖 > 80%，文档完整

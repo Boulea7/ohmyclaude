@@ -326,22 +326,59 @@ def switch(
         ohmyclaude switch glm         Switch to GLM provider
         ohmyclaude switch official    Switch back to official API
         ohmyclaude switch --list      List all available providers
+        ohmyclaude switch custom -u https://api.example.com -t $TOKEN
     """
-    if list_all or not provider:
-        console.print("[bold]Available API Providers:[/]\n")
-        console.print("  [cyan]official[/]  - Anthropic official API (requires subscription)")
-        console.print("  [cyan]glm[/]       - Zhipu AI (China optimized)")
-        console.print("  [cyan]88code[/]    - Third-party proxy")
-        console.print("  [cyan]deepseek[/]  - DeepSeek V3 (cost-effective)")
-        console.print()
-        console.print("[dim]Use: ohmyclaude switch <provider>[/]")
+    from ohmyclaude.core.provider import ProviderSwitcher
+    from ohmyclaude.ui.tables import create_provider_table
+    from ohmyclaude.ui.prompts import select_provider
+
+    switcher = ProviderSwitcher()
+
+    # List mode: show all providers
+    if list_all:
+        providers = [p.model_dump() for p in switcher.get_all_providers().values()]
+        current = switcher.get_current()
+        table = create_provider_table(providers, current)
+        console.print(table)
+        console.print("\n[dim]Use: ohmyclaude switch <provider>[/]")
         return
 
-    console.print(f"[blue]Switching to provider: {provider}[/]")
+    # Interactive selection if no provider specified
+    if not provider:
+        provider = select_provider()
+        console.print()
 
-    # TODO: Implement actual switching logic in Phase 6
-    console.print("\n[yellow]Switch command not yet implemented.[/]")
-    console.print("[dim]This will be completed in Phase 6.[/]")
+    # Execute switch
+    try:
+        result = switcher.switch(
+            provider_name=provider,
+            token=token,
+            base_url=base_url,
+            skip_codex=skip_codex,
+        )
+
+        if not result.success:
+            console.print(f"[red]Switch failed: {result.message}[/]")
+            raise SystemExit(1)
+
+        console.print(f"\n[green]✓ Successfully switched to: {result.provider_name}[/]")
+
+        if result.settings_backup:
+            console.print(f"[dim]  Settings backed up: {result.settings_backup}[/]")
+
+        if result.codex_updated:
+            console.print("[dim]  Codex auth.json updated[/]")
+            if result.codex_backup:
+                console.print(f"[dim]  Codex backed up: {result.codex_backup}[/]")
+
+        console.print(
+            "\n[yellow]Please restart Claude Code or open a new terminal "
+            "to apply changes.[/]"
+        )
+
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/]")
+        raise SystemExit(1)
 
 
 @cli.group()
@@ -356,34 +393,99 @@ def provider() -> None:
 @provider.command("list")
 def provider_list() -> None:
     """List all available providers."""
-    console.print("[bold]Configured API Providers:[/]\n")
-    console.print("  [green]official[/]  - Anthropic official API")
-    console.print("  [dim]glm[/]       - Zhipu AI")
-    console.print("  [dim]88code[/]    - Third-party proxy")
-    console.print("  [dim]deepseek[/]  - DeepSeek")
-    console.print()
-    console.print("[dim]Use: ohmyclaude provider add <name> to add custom provider[/]")
+    from ohmyclaude.core.provider import ProviderSwitcher
+    from ohmyclaude.ui.tables import create_provider_table
+
+    switcher = ProviderSwitcher()
+    providers = [p.model_dump() for p in switcher.get_all_providers().values()]
+    current = switcher.get_current()
+
+    table = create_provider_table(providers, current)
+    console.print(table)
+    console.print("\n[dim]Use: ohmyclaude provider add <name> to add custom provider[/]")
 
 
 @provider.command("show")
 def provider_show() -> None:
     """Show current provider configuration."""
-    # TODO: Implement in Phase 6
-    console.print("[yellow]Current provider detection not yet implemented.[/]")
+    from ohmyclaude.core.provider import ProviderSwitcher
+
+    switcher = ProviderSwitcher()
+    current = switcher.get_current()
+    provider_config = switcher.get_provider(current) if current else None
+
+    console.print(f"[bold]Current Provider:[/] {current or 'unknown'}\n")
+
+    if provider_config:
+        console.print(f"  [cyan]Display Name:[/]  {provider_config.display_name}")
+        console.print(f"  [cyan]Description:[/]   {provider_config.description}")
+        if provider_config.anthropic_base_url:
+            console.print(f"  [cyan]Base URL:[/]       {provider_config.anthropic_base_url}")
+        else:
+            console.print("  [cyan]Base URL:[/]       (official default)")
+        console.print(f"  [cyan]Token Env:[/]      {provider_config.anthropic_token_env}")
+        if provider_config.openai_base_url:
+            console.print(f"  [cyan]OpenAI URL:[/]     {provider_config.openai_base_url}")
+        console.print(f"  [cyan]API Type:[/]       {provider_config.api_type}")
+        console.print(f"  [cyan]Built-in:[/]       {'Yes' if provider_config.is_builtin else 'No'}")
+    else:
+        console.print("[dim]  Provider details not available[/]")
 
 
 @provider.command("add")
 @click.argument("name")
 @click.option("--base-url", "-u", required=True, help="API base URL.")
 @click.option("--token-env", required=True, help="Environment variable name for token.")
-def provider_add(name: str, base_url: str, token_env: str) -> None:
-    """Add a custom API provider."""
-    console.print(f"[blue]Adding custom provider: {name}[/]")
-    console.print(f"  Base URL: {base_url}")
-    console.print(f"  Token env: {token_env}")
+@click.option("--display-name", "-d", help="Display name (defaults to name).")
+@click.option("--openai-url", help="OpenAI-compatible URL for Codex.")
+@click.option("--openai-token-env", help="Env var for OpenAI token.")
+@click.option("--description", help="Provider description.")
+def provider_add(
+    name: str,
+    base_url: str,
+    token_env: str,
+    display_name: str | None,
+    openai_url: str | None,
+    openai_token_env: str | None,
+    description: str | None,
+) -> None:
+    """Add a custom API provider.
 
-    # TODO: Implement in Phase 6
-    console.print("\n[yellow]Provider add not yet implemented.[/]")
+    \b
+    Examples:
+        ohmyclaude provider add myvendor -u https://api.example.com --token-env MY_TOKEN
+        ohmyclaude provider add myvendor -u https://api.example.com --token-env MY_TOKEN \\
+            --openai-url https://api.example.com/openai/v1
+    """
+    from ohmyclaude.core.provider import ProviderSwitcher
+
+    switcher = ProviderSwitcher()
+
+    # Check if provider already exists
+    if switcher.get_provider(name):
+        console.print(f"[red]Provider '{name}' already exists.[/]")
+        raise SystemExit(1)
+
+    success = switcher.add_custom_provider(
+        name=name,
+        display_name=display_name or name,
+        base_url=base_url,
+        token_env=token_env,
+        openai_base_url=openai_url,
+        openai_token_env=openai_token_env,
+        description=description or "",
+    )
+
+    if success:
+        console.print(f"[green]✓ Added custom provider: {name}[/]")
+        console.print(f"  Base URL:  {base_url}")
+        console.print(f"  Token env: {token_env}")
+        if openai_url:
+            console.print(f"  OpenAI URL: {openai_url}")
+        console.print(f"\n[dim]Use: ohmyclaude switch {name}[/]")
+    else:
+        console.print("[red]Failed to add provider.[/]")
+        raise SystemExit(1)
 
 
 @cli.command("export")
