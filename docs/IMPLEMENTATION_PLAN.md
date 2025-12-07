@@ -550,26 +550,39 @@ def switch(provider: str):
 
 ---
 
-### Phase 7: Subagent 模块
+### Phase 7: Subagent 模块 ✅ 完成
 
 **目标**: 实现 Subagent 系统配置
 
 **任务清单**:
 
-| 任务 | 描述 | 优先级 | 依赖 |
+| 任务 | 描述 | 优先级 | 状态 |
 |------|------|--------|------|
-| P7-1 | 研究 Claude Code Subagent 机制 | P0 | - |
-| P7-2 | 创建预设 Agent 模板 | P0 | P7-1 |
-| P7-3 | 实现 Agent 配置生成 | P0 | P7-2 |
-| P7-4 | 实现用户偏好 Agent 生成 | P1 | P7-3 |
+| P7-1 | 研究 Claude Code Subagent 机制 | P0 | ✅ 完成 |
+| P7-2 | 创建预设 Agent 模板 (5个新模板) | P0 | ✅ 完成 |
+| P7-3 | 实现 `_install_agents()` 安装方法 | P0 | ✅ 完成 |
+| P7-4 | 更新 `ensure_claude_dirs()` 创建 agents 目录 | P1 | ✅ 完成 |
+
+**关键产出**:
+- [x] 5 个新代理模板 (code-reviewer, debugger, test-engineer, refactor-expert, doc-writer)
+- [x] `_install_agents()` 方法实现路径遍历保护
+- [x] 预设级别代理分配 (starter: 2, standard: 5, full: 10)
+- [x] 代理安装到 `~/.claude/agents/` 目录
 
 **预设 Agent 列表**:
-- `code-reviewer`: 代码审查专家
-- `debugger`: 调试专家
-- `test-engineer`: 测试工程师
-- `performance-optimizer`: 性能优化
-- `security-auditor`: 安全审计
-- `doc-writer`: 文档撰写
+
+| 代理名称 | 预设级别 | 用途 |
+|---------|---------|------|
+| `code-reviewer` | starter | 代码审查专家 |
+| `debugger` | starter | 调试专家 |
+| `test-engineer` | standard | 测试工程师 |
+| `refactor-expert` | standard | 重构专家 |
+| `doc-writer` | standard | 文档撰写 |
+| `code-architecture-reviewer` | full | 架构审查 |
+| `auto-error-resolver` | full | 错误修复 |
+| `web-research-specialist` | full | 网络调研 |
+| `documentation-architect` | full | 文档架构 |
+| `plan-reviewer` | full | 计划审查 |
 
 ---
 
@@ -801,7 +814,7 @@ def install_codex():
 - [x] Phase 5: Hooks 系统 (脚本安装, OHMYCLAUDE_ROOT 环境变量, Codex审查) ✅ (2024-12-04)
 - [x] Phase 2.7: CLI 命令集成 (setup/doctor/export/import, 安全提取, 回滚机制) ✅ (2024-12-04)
 - [x] Phase 6: API 供应商切换 (4供应商, switch/provider命令, Codex同步, 备份机制) ✅ (2024-12-06)
-- [ ] Phase 7: Subagent 配置正确
+- [x] Phase 7: Subagent 配置 (10代理模板, 预设级别分配, 路径安全保护) ✅ (2024-12-07)
 - [ ] Phase 8: CodexMCP 集成成功
 - [ ] Phase 9: 测试覆盖 > 80%，文档完整
 - [ ] Phase 10: PyPI 发布成功，install.sh 可用
