@@ -4,6 +4,7 @@ This module provides backup and restore functionality for Claude Code configurat
 """
 
 import json
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -17,6 +18,50 @@ from ohmyclaude.core.paths import (
     SETTINGS_FILE,
     ensure_ohmyclaude_dirs,
 )
+
+
+# Regex for safe backup names (alphanumeric, dash, underscore, dot)
+_SAFE_NAME_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
+
+
+def _validate_backup_name(name: str) -> str:
+    """Validate backup name to prevent path traversal attacks.
+
+    Args:
+        name: Backup name to validate
+
+    Returns:
+        The validated name
+
+    Raises:
+        ValueError: If name contains unsafe characters
+    """
+    if not name or not _SAFE_NAME_PATTERN.match(name):
+        raise ValueError(f"Invalid backup name: {name!r}")
+    return name
+
+
+def _resolve_backup_path(backups_dir: Path, backup_name: str) -> Path:
+    """Safely resolve a backup path within the backups directory.
+
+    Args:
+        backups_dir: The base backups directory
+        backup_name: Name of the backup
+
+    Returns:
+        Resolved path guaranteed to be within backups_dir
+
+    Raises:
+        ValueError: If path escapes backups_dir
+    """
+    safe_name = _validate_backup_name(backup_name)
+    path = (backups_dir / safe_name).resolve()
+    backups_dir_resolved = backups_dir.resolve()
+
+    if not str(path).startswith(str(backups_dir_resolved)):
+        raise ValueError(f"Backup path escapes backups directory: {backup_name}")
+
+    return path
 
 
 class BackupManager:
@@ -56,17 +101,25 @@ class BackupManager:
         """Create a timestamped backup of current configuration.
 
         Args:
-            tag: Optional tag to include in backup name
+            tag: Optional tag to include in backup name (must be alphanumeric/dash/underscore)
 
         Returns:
             Path to the backup directory
+
+        Raises:
+            ValueError: If tag contains unsafe characters
         """
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        backup_name = f"backup-{timestamp}"
-        if tag:
-            backup_name = f"backup-{tag}-{timestamp}"
 
-        backup_path = self.backups_dir / backup_name
+        # Validate tag if provided
+        if tag:
+            _validate_backup_name(tag)
+            backup_name = f"backup-{tag}-{timestamp}"
+        else:
+            backup_name = f"backup-{timestamp}"
+
+        # Use safe path resolution
+        backup_path = _resolve_backup_path(self.backups_dir, backup_name)
         backup_path.mkdir(parents=True, exist_ok=True)
 
         # Backup settings.json
@@ -98,8 +151,11 @@ class BackupManager:
         """List all available backups.
 
         Returns:
-            List of backup info dictionaries
+            List of backup info dictionaries (empty list if backups_dir doesn't exist)
         """
+        if not self.backups_dir.exists():
+            return []
+
         backups = []
 
         for backup_dir in sorted(self.backups_dir.iterdir(), reverse=True):
@@ -135,8 +191,13 @@ class BackupManager:
 
         Returns:
             True if restore was successful
+
+        Raises:
+            FileNotFoundError: If backup doesn't exist
+            ValueError: If backup_name contains unsafe characters
         """
-        backup_path = self.backups_dir / backup_name
+        # Use safe path resolution to prevent path traversal
+        backup_path = _resolve_backup_path(self.backups_dir, backup_name)
 
         if not backup_path.exists():
             raise FileNotFoundError(f"Backup not found: {backup_name}")
@@ -156,10 +217,12 @@ class BackupManager:
         if backup_claude_md.exists():
             shutil.copy2(backup_claude_md, CLAUDE_DIR / "CLAUDE.md")
 
-        # Restore commands
+        # Restore commands - remove existing to ensure clean state
         backup_commands = backup_path / "commands"
         if backup_commands.exists():
-            shutil.copytree(backup_commands, COMMANDS_DIR, dirs_exist_ok=True)
+            if COMMANDS_DIR.exists():
+                shutil.rmtree(COMMANDS_DIR)
+            shutil.copytree(backup_commands, COMMANDS_DIR)
 
         return True
 
@@ -171,8 +234,12 @@ class BackupManager:
 
         Returns:
             True if deletion was successful
+
+        Raises:
+            ValueError: If backup_name contains unsafe characters
         """
-        backup_path = self.backups_dir / backup_name
+        # Use safe path resolution to prevent path traversal
+        backup_path = _resolve_backup_path(self.backups_dir, backup_name)
 
         if not backup_path.exists():
             return False

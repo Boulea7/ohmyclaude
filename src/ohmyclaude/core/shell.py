@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 import os
 import re
+import shlex
 
 # Sentinel markers for idempotent injection
 SENTINEL_START = "# >>> ohmyclaude initialize >>>"
@@ -15,6 +16,22 @@ SENTINEL_END = "# <<< ohmyclaude initialize <<<"
 
 # Default environment file path
 DEFAULT_ENV_FILE = Path.home() / ".ohmyclaude" / "env.sh"
+
+# Characters that could enable shell injection if present in paths
+_UNSAFE_PATH_CHARS = frozenset('"\'`$\\;|&<>(){}[]!#')
+
+
+def _validate_env_file_path(path: Path) -> bool:
+    """Validate that env_file path is safe for shell injection.
+
+    Args:
+        path: Path to validate
+
+    Returns:
+        True if path is safe, False if it contains dangerous characters
+    """
+    path_str = str(path)
+    return not any(c in path_str for c in _UNSAFE_PATH_CHARS)
 
 
 class ShellIntegration:
@@ -75,12 +92,16 @@ class ShellIntegration:
             env_file: Path to environment file to source (default: ~/.ohmyclaude/env.sh)
 
         Returns:
-            True if injection was successful
+            True if injection was successful, False if path is unsafe or IO error
         """
         if env_file is None:
             env_file = DEFAULT_ENV_FILE
 
         env_file = Path(env_file).expanduser()
+
+        # Validate path to prevent shell injection
+        if not _validate_env_file_path(env_file):
+            return False
 
         # Validate RC path and read content
         try:
@@ -156,30 +177,33 @@ class ShellIntegration:
         """Generate POSIX shell (bash/zsh) block.
 
         Args:
-            env_file: Path to environment file
+            env_file: Path to environment file (must be pre-validated)
 
         Returns:
             Shell block string
         """
+        # Use shlex.quote for safe shell escaping
+        quoted_path = shlex.quote(str(env_file))
         return f"""{SENTINEL_START}
 #!! Contents within this block are managed by 'ohmyclaude init' !!
 export OHMYCLAUDE_ROOT="$HOME/.ohmyclaude"
-[ -f "{env_file}" ] && source "{env_file}"
+[ -f {quoted_path} ] && source {quoted_path}
 {SENTINEL_END}"""
 
     def _generate_fish_block(self, env_file: Path) -> str:
         """Generate Fish shell block.
 
         Args:
-            env_file: Path to environment file
+            env_file: Path to environment file (must be pre-validated for safe chars)
 
         Returns:
             Shell block string
         """
+        # Fish uses different quoting; path is pre-validated in inject_source()
         return f"""{SENTINEL_START}
 #!! Contents within this block are managed by 'ohmyclaude init' !!
 set -gx OHMYCLAUDE_ROOT "$HOME/.ohmyclaude"
-test -f "{env_file}"; and source "{env_file}"
+test -f '{env_file}'; and source '{env_file}'
 {SENTINEL_END}"""
 
 

@@ -76,9 +76,9 @@ class ProviderConfig(BaseModel):
         env: dict[str, str | int | None] = {}
 
         # Token from environment variable
+        # Always set (or clear) to prevent stale token from previous provider
         token = os.environ.get(self.anthropic_token_env)
-        if token:
-            env["ANTHROPIC_AUTH_TOKEN"] = token
+        env["ANTHROPIC_AUTH_TOKEN"] = token if token else None
 
         # Base URL (None means use default / should be deleted)
         if self.anthropic_base_url:
@@ -86,6 +86,21 @@ class ProviderConfig(BaseModel):
         else:
             # Explicitly mark for removal when switching to official
             env["ANTHROPIC_BASE_URL"] = None
+
+        # OpenAI configuration for hybrid/openai providers
+        if self.api_type in ("openai", "hybrid"):
+            if self.openai_base_url:
+                env["OPENAI_BASE_URL"] = self.openai_base_url
+            else:
+                env["OPENAI_BASE_URL"] = None
+
+            # OpenAI token - try openai_token_env first, fall back to anthropic_token_env
+            openai_token = None
+            if self.openai_token_env:
+                openai_token = os.environ.get(self.openai_token_env)
+            if not openai_token:
+                openai_token = os.environ.get(self.anthropic_token_env)
+            env["OPENAI_API_KEY"] = openai_token if openai_token else None
 
         # Extra environment variables
         for key, value in self.extra_env.items():

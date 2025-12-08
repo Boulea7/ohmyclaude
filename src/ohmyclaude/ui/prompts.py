@@ -159,8 +159,12 @@ def fuzzy_select_mcp(available: list[dict]) -> list[str]:
         available: List of available MCP server configs with 'name' and 'description'.
 
     Returns:
-        List of selected MCP server names.
+        List of selected MCP server names (empty list if no servers available).
     """
+    # Handle empty list to avoid InquirerPy ValueError
+    if not available:
+        return []
+
     choices = [
         Choice(value=mcp["name"], name=f"{mcp['name']} - {mcp.get('description', '')}")
         for mcp in available
