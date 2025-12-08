@@ -18,6 +18,7 @@ from typing import Optional
 import base64
 import json
 import os
+import shutil
 
 import keyring
 from keyring.errors import KeyringError
@@ -206,6 +207,9 @@ class CredentialManager:
     def _load_secrets_file(self) -> dict:
         """Load secrets from local file.
 
+        If the file is corrupted, it will be backed up with a .corrupt suffix
+        and an empty dict will be returned.
+
         Returns:
             Dictionary of secrets
         """
@@ -216,6 +220,12 @@ class CredentialManager:
             # Ensure we always return a dict
             return data if isinstance(data, dict) else {}
         except (json.JSONDecodeError, OSError):
+            # Backup corrupted file before returning empty dict
+            corrupt_path = SECRETS_FILE.with_suffix(".corrupt")
+            try:
+                shutil.copy2(SECRETS_FILE, corrupt_path)
+            except OSError:
+                pass  # Best effort - continue even if backup fails
             return {}
 
     def _save_secrets_file(self, secrets: dict) -> None:

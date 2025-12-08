@@ -105,7 +105,14 @@ def setup(preset: str | None, no_interactive: bool) -> None:
     # 5. Show results
     _show_install_result(result)
 
-    # 6. Show next steps
+    # 6. Check for errors and exit accordingly
+    errors = result.get("errors", [])
+    if errors:
+        console.print("\n[red bold]Configuration completed with errors![/]")
+        console.print("[yellow]Please review the errors above and fix them manually.[/]")
+        raise SystemExit(1)
+
+    # 7. Show next steps (only if successful)
     console.print("\n[green bold]Configuration complete![/]")
     console.print()
     console.print("[bold]Next steps:[/]")
@@ -376,8 +383,14 @@ def switch(
             "to apply changes.[/]"
         )
 
-    except Exception as e:
+    except (ValueError, FileNotFoundError, OSError) as e:
+        # Expected errors - show user-friendly message
         console.print(f"[red]Error: {e}[/]")
+        raise SystemExit(1)
+    except Exception:
+        # Unexpected errors - show full traceback for debugging
+        console.print("[red]Unexpected error occurred:[/]")
+        console.print_exception()
         raise SystemExit(1)
 
 
@@ -498,11 +511,17 @@ def export_config(output: str) -> None:
     """
     output_path = Path(output)
 
-    # Normalize to .tar.gz suffix
+    # Normalize to .tar.gz suffix (avoid character-level rstrip)
     if output_path.suffix == ".tgz":
         pass  # Keep .tgz as-is
-    elif not str(output_path).endswith(".tar.gz"):
-        output_path = Path(str(output_path).rstrip(".tar").rstrip(".gz") + ".tar.gz")
+    elif output_path.suffixes == [".tar", ".gz"]:
+        pass  # Already has .tar.gz
+    else:
+        # Remove any partial suffix and add .tar.gz
+        stem = output_path.stem
+        if stem.endswith(".tar"):
+            stem = stem[:-4]
+        output_path = output_path.parent / f"{stem}.tar.gz"
 
     console.print(f"[blue]Exporting configuration to: {output_path}[/]\n")
 
@@ -548,6 +567,26 @@ def _safe_extract_tar(tar: tarfile.TarFile, dest: Path) -> None:
             raise ValueError(f"Device files not allowed: {member.name}")
     # Extract all members (after validation)
     tar.extractall(dest)
+
+
+def _rollback_import(backup_name: str | None, mgr: BackupManager) -> None:
+    """Attempt to rollback to a previous backup after failed import.
+
+    Args:
+        backup_name: Name of the backup to restore, or None to skip
+        mgr: BackupManager instance
+    """
+    if not backup_name:
+        return
+
+    console.print("[yellow]Rolling back to previous configuration...[/]")
+    try:
+        mgr.restore_backup(backup_name, confirm=False)
+        console.print("[dim]Rollback complete.[/]")
+    except (OSError, ValueError) as e:
+        console.print(f"[red]Rollback failed: {e}[/]")
+        console.print("[red]Manual recovery may be needed from backup:[/]")
+        console.print(f"[dim]  {mgr.backups_dir / backup_name}[/]")
 
 
 @cli.command("import")
@@ -614,27 +653,16 @@ def import_config(input_file: str) -> None:
         console.print("[green]Configuration imported successfully![/]")
         console.print("[dim]Run 'omc doctor' to verify the configuration.[/]")
 
-    except (tarfile.TarError, ValueError) as e:
+    except (tarfile.TarError, ValueError, OSError) as e:
+        # Expected errors - show user-friendly message
         console.print(f"[red]Error: {e}[/]")
-        # Rollback to pre-import backup if available
-        if pre_backup_name:
-            console.print("[yellow]Rolling back to previous configuration...[/]")
-            try:
-                backup_mgr.restore_backup(pre_backup_name, confirm=False)
-                console.print("[dim]Rollback complete.[/]")
-            except Exception:
-                console.print("[red]Rollback failed. Manual recovery may be needed.[/]")
+        _rollback_import(pre_backup_name, backup_mgr)
         raise SystemExit(1)
-    except Exception as e:
-        console.print(f"[red]Import failed: {e}[/]")
-        # Rollback to pre-import backup if available
-        if pre_backup_name:
-            console.print("[yellow]Rolling back to previous configuration...[/]")
-            try:
-                backup_mgr.restore_backup(pre_backup_name, confirm=False)
-                console.print("[dim]Rollback complete.[/]")
-            except Exception:
-                console.print("[red]Rollback failed. Manual recovery may be needed.[/]")
+    except Exception:
+        # Unexpected errors - show full traceback for debugging
+        console.print("[red]Unexpected error during import:[/]")
+        console.print_exception()
+        _rollback_import(pre_backup_name, backup_mgr)
         raise SystemExit(1)
 
 
