@@ -32,8 +32,19 @@ class McpServerConfig(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    def to_settings_dict(self) -> dict[str, Any]:
-        """Convert to Claude Code settings.json format."""
+    def to_settings_dict(self, strict: bool = False) -> dict[str, Any]:
+        """Convert to Claude Code settings.json format.
+
+        Args:
+            strict: If True, raise ValueError for missing environment variables.
+                   If False, skip missing variables (default for backward compat).
+
+        Returns:
+            Settings dict ready for settings.json mcpServers field.
+
+        Raises:
+            ValueError: If strict=True and required env vars are missing.
+        """
         result: dict[str, Any] = {}
 
         if self.transport == "stdio":
@@ -46,19 +57,45 @@ class McpServerConfig(BaseModel):
         # Process environment variables
         if self.env:
             resolved_env = {}
+            missing_vars: list[str] = []
+
             for key, value in self.env.items():
                 # Resolve ${VAR} references from environment
                 if value.startswith("${") and value.endswith("}"):
                     env_var = value[2:-1]
-                    resolved_value = os.environ.get(env_var, "")
+                    resolved_value = os.environ.get(env_var)
                     if resolved_value:
                         resolved_env[key] = resolved_value
+                    else:
+                        missing_vars.append(env_var)
                 else:
                     resolved_env[key] = value
+
+            # Report missing variables in strict mode
+            if strict and missing_vars:
+                raise ValueError(
+                    f"Missing environment variables for MCP server '{self.name}': "
+                    f"{', '.join(missing_vars)}"
+                )
+
             if resolved_env:
                 result["env"] = resolved_env
 
         return result
+
+    def get_missing_env_vars(self) -> list[str]:
+        """Get list of missing environment variables for this server.
+
+        Returns:
+            List of environment variable names that are referenced but not set.
+        """
+        missing: list[str] = []
+        for key, value in self.env.items():
+            if value.startswith("${") and value.endswith("}"):
+                env_var = value[2:-1]
+                if not os.environ.get(env_var):
+                    missing.append(env_var)
+        return missing
 
 
 class McpPackage(BaseModel):
@@ -350,11 +387,11 @@ class McpPackageRegistry:
                         if "Python" in req:
                             # Python version check
                             pass
-                        elif "uv" in req:
-                            # Check if uv is installed
+                        elif "uv" in req.lower():
+                            # Check if uv or uvx is installed
                             import shutil
 
-                            if not shutil.which("uvx"):
+                            if not (shutil.which("uv") or shutil.which("uvx")):
                                 pkg_missing.append(req)
                         elif "Codex" in req:
                             # Check if codex is installed

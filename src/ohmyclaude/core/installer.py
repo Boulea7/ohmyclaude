@@ -113,9 +113,17 @@ class Installer:
         # Ensure directories exist
         ensure_claude_dirs()
 
-        # Install components
+        # Install core components first (settings.json, CLAUDE.md)
+        # Short-circuit if core config fails - no point continuing without these
         self._install_settings()
+        if self._has_core_error("settings"):
+            return self.result.to_dict()
+
         self._install_claude_md()
+        if self._has_core_error("claude_md"):
+            return self.result.to_dict()
+
+        # Install optional components (continue even if some fail)
         self._install_commands()
         self._install_hooks()
         self._install_agents()
@@ -124,6 +132,17 @@ class Installer:
             self._install_mcp()
 
         return self.result.to_dict()
+
+    def _has_core_error(self, item_type: str) -> bool:
+        """Check if a core component has an error.
+
+        Args:
+            item_type: The type of component to check
+
+        Returns:
+            True if there's an error for this component type
+        """
+        return any(e["type"] == item_type for e in self.result.errors)
 
     def _install_settings(self) -> None:
         """Install settings.json configuration."""
