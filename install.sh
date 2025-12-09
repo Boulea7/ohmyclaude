@@ -11,10 +11,12 @@
 #   4. Provides next steps guidance
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/ohmyclaude/ohmyclaude/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/ohmyclaude/ohmyclaude/main/install.sh | bash -s -- --yes
 #   ./install.sh            # Interactive installation
 #   ./install.sh --yes      # Non-interactive (auto-yes to prompts)
 #   ./install.sh --help     # Show help message
+#
+# Note: When piping to bash, use --yes flag for non-interactive mode
 #
 ################################################################################
 
@@ -36,6 +38,11 @@ readonly MIN_PYTHON_MINOR=10
 # Installation options
 AUTO_YES=false
 USE_PIPX=false
+
+# Auto-detect non-interactive mode (piped input)
+if [[ ! -t 0 ]] || [[ ! -t 1 ]]; then
+    AUTO_YES=true
+fi
 
 ################################################################################
 # Helper Functions
@@ -277,8 +284,10 @@ main() {
     # Parse command line arguments
     parse_args "$@"
 
-    # Print header
-    clear
+    # Print header (skip clear in non-interactive mode)
+    if [[ -t 1 ]] && [[ -n "$TERM" ]]; then
+        clear
+    fi
     show_logo
     print_header "OhMyClaude Installation"
     echo ""

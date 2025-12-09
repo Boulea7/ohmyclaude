@@ -638,19 +638,26 @@ def switch(provider: str):
 
 ---
 
-### Phase 10: 发布 v1.0
+### Phase 10: 发布 v1.0 ⏳ (2024-12-08)
 
 **目标**: 发布稳定版本
 
 **任务清单**:
 
-| 任务 | 描述 | 优先级 | 依赖 |
+| 任务 | 描述 | 优先级 | 状态 |
 |------|------|--------|------|
-| P10-1 | 发布到 PyPI | P0 | P9 |
-| P10-2 | 创建 install.sh 脚本 | P0 | P10-1 |
-| P10-3 | 设置 GitHub Actions CI | P1 | P10-1 |
-| P10-4 | 创建 Release Notes | P1 | P10-1 |
-| P10-5 | 推广宣传 | P2 | P10-4 |
+| P10-1 | 创建 LICENSE 文件 | P0 | ✅ 完成 |
+| P10-2 | 创建 install.sh 脚本 | P0 | ✅ 完成 |
+| P10-3 | 设置 GitHub Actions CI | P1 | ✅ 完成 |
+| P10-4 | 发布到 PyPI | P0 | ⏳ 待完成 |
+| P10-5 | 创建 Release Notes | P1 | ⏳ 待完成 |
+| P10-6 | 推广宣传 | P2 | ⏳ 待完成 |
+
+**关键产出**:
+- [x] LICENSE: MIT 许可证
+- [x] install.sh: 一键安装脚本 (pipx/pip 支持)
+- [x] .github/workflows/test.yml: CI 测试 (Python 3.10/3.11/3.12)
+- [x] .github/workflows/publish.yml: PyPI 发布 (Trusted Publishing)
 
 ---
 
@@ -817,13 +824,16 @@ def switch(provider: str):
 - [x] Phase 7: Subagent 配置 (10代理模板, 预设级别分配, 路径安全保护) ✅ (2024-12-07)
 - [x] Phase 8: CodexMCP 集成 (MCP包, /codex命令, 协作协议, auth同步) ✅ (2024-12-07)
 - [x] Phase 9: 测试覆盖 53% (核心模块85%+), 文档完整 ✅ (2024-12-07)
-- [ ] Phase 10: PyPI 发布成功，install.sh 可用
+- [ ] Phase 10: PyPI 发布成功，install.sh 可用 ⏳ (2024-12-08 进行中)
 
 ### 发布检查
 
-- [ ] 所有测试通过
-- [ ] README 完整
-- [ ] CHANGELOG 更新
-- [ ] 版本号正确
+- [x] LICENSE 文件存在 (MIT)
+- [x] install.sh 脚本可执行
+- [x] GitHub Actions CI 配置完成
+- [x] 所有测试通过 (157 tests)
+- [x] README 完整 (254 行)
+- [x] CHANGELOG 更新 (77 行)
+- [x] 版本号正确 (1.0.0)
 - [ ] PyPI 发布成功
-- [ ] install.sh 测试通过
+- [ ] install.sh 远程测试通过
