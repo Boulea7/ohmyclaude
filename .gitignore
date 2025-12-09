@@ -25,6 +25,9 @@ venv/
 *.egg-info/
 dist/
 build/
+.coverage
+coverage.xml
+htmlcov/
 
 # Node
 node_modules/
