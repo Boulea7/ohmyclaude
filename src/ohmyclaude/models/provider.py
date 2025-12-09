@@ -4,10 +4,10 @@ This module defines the data models for API provider switching functionality,
 supporting official Anthropic API and third-party providers like GLM, 88Code, DeepSeek.
 """
 
-from typing import Literal, Optional
+import os
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-import os
 
 
 class ProviderConfig(BaseModel):
@@ -31,7 +31,7 @@ class ProviderConfig(BaseModel):
     description: str = Field(default="", description="Provider description")
 
     # Anthropic API configuration
-    anthropic_base_url: Optional[str] = Field(
+    anthropic_base_url: str | None = Field(
         default=None,
         description="Anthropic API base URL (None = official default)",
     )
@@ -40,11 +40,11 @@ class ProviderConfig(BaseModel):
     )
 
     # OpenAI-compatible API configuration (for Codex)
-    openai_base_url: Optional[str] = Field(
+    openai_base_url: str | None = Field(
         default=None,
         description="OpenAI-compatible API base URL for Codex",
     )
-    openai_token_env: Optional[str] = Field(
+    openai_token_env: str | None = Field(
         default=None,
         description="Environment variable name for OpenAI API key",
     )
@@ -108,7 +108,7 @@ class ProviderConfig(BaseModel):
 
         return env
 
-    def get_token(self) -> Optional[str]:
+    def get_token(self) -> str | None:
         """Get the token from environment variable.
 
         Returns:
@@ -127,8 +127,8 @@ class CustomProviderConfig(BaseModel):
     display_name: str
     anthropic_base_url: str
     anthropic_token_env: str
-    openai_base_url: Optional[str] = None
-    openai_token_env: Optional[str] = None
+    openai_base_url: str | None = None
+    openai_token_env: str | None = None
     description: str = ""
 
     def to_provider_config(self) -> ProviderConfig:
@@ -155,15 +155,15 @@ class SwitchResult(BaseModel):
 
     success: bool = Field(description="Whether the switch operation succeeded")
     provider_name: str = Field(description="Name of the target provider")
-    previous_provider: Optional[str] = Field(
+    previous_provider: str | None = Field(
         default=None,
         description="Name of the previous provider",
     )
-    settings_backup: Optional[str] = Field(
+    settings_backup: str | None = Field(
         default=None,
         description="Path to settings.json backup file",
     )
-    codex_backup: Optional[str] = Field(
+    codex_backup: str | None = Field(
         default=None,
         description="Path to Codex auth.json backup file",
     )

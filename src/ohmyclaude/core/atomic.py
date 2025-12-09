@@ -4,11 +4,12 @@ This module provides context managers for safe file operations that ensure
 files are either fully written or left unchanged in case of errors.
 """
 
-from contextlib import contextmanager
-from pathlib import Path
-from typing import IO, Generator
 import os
 import tempfile
+from collections.abc import Generator
+from contextlib import contextmanager
+from pathlib import Path
+from typing import IO
 
 
 @contextmanager

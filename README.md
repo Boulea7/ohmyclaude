@@ -109,10 +109,10 @@ omc init
 
 | Provider | 描述 | Token 环境变量 |
 |----------|------|---------------|
-| `official` | Anthropic 官方 API | `ANTHROPIC_API_KEY` |
+| `official` | Anthropic 官方 API | `ANTHROPIC_AUTH_TOKEN` |
 | `glm` | 智谱 AI (国内优化) | `GLM_ANTHROPIC_AUTH_TOKEN` |
 | `88code` | 第三方代理 | `CODE88_ANTHROPIC_AUTH_TOKEN` |
-| `deepseek` | DeepSeek V3 (高性价比) | `DEEPSEEK_AUTH_TOKEN` |
+| `deepseek` | DeepSeek V3 (高性价比) | `DEEPSEEK_API_KEY` |
 
 ### 切换示例
 

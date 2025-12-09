@@ -3,7 +3,7 @@
 This module defines the data models for preset packages (starter, standard, full).
 """
 
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 

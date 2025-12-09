@@ -5,15 +5,15 @@ This module provides common fixtures used across unit and integration tests.
 
 import json
 import os
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any
 from unittest.mock import patch
 
 import pytest
 
 from ohmyclaude.models.presets import PresetConfig
 from ohmyclaude.models.settings import SettingsConfig
-
 
 # ============================================================================
 # Path Fixtures - Mock ~/.claude and ~/.ohmyclaude directories

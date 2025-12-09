@@ -1,8 +1,7 @@
 """Integration tests for CLI commands."""
 
-import json
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner

@@ -4,12 +4,12 @@ This module implements the core logic for switching between API providers,
 including backup management, settings update, and Codex auth synchronization.
 """
 
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Optional
 import json
 import os
 import shutil
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 from ohmyclaude.core.atomic import save_json
 from ohmyclaude.core.paths import (
@@ -22,9 +22,7 @@ from ohmyclaude.models.provider import ProviderConfig, SwitchResult
 from ohmyclaude.modules.provider import (
     BUILTIN_PROVIDERS,
     get_cleanup_keys,
-    get_provider,
 )
-
 
 BACKUP_SUFFIX_FMT = "%Y%m%d-%H%M%S"
 
@@ -59,7 +57,7 @@ class ProviderSwitcher:
         try:
             import yaml
 
-            with open(PROVIDERS_FILE, "r", encoding="utf-8") as f:
+            with open(PROVIDERS_FILE, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
 
             for name, config in data.get("providers", {}).items():
@@ -89,7 +87,7 @@ class ProviderSwitcher:
         """
         return {**BUILTIN_PROVIDERS, **self._custom_providers}
 
-    def get_provider(self, name: str) -> Optional[ProviderConfig]:
+    def get_provider(self, name: str) -> ProviderConfig | None:
         """Get provider by name.
 
         Args:
@@ -100,7 +98,7 @@ class ProviderSwitcher:
         """
         return BUILTIN_PROVIDERS.get(name) or self._custom_providers.get(name)
 
-    def get_current(self) -> Optional[str]:
+    def get_current(self) -> str | None:
         """Detect current provider from settings.json.
 
         Returns:
@@ -130,8 +128,8 @@ class ProviderSwitcher:
     def switch(
         self,
         provider_name: str,
-        token: Optional[str] = None,
-        base_url: Optional[str] = None,
+        token: str | None = None,
+        base_url: str | None = None,
         skip_codex: bool = False,
     ) -> SwitchResult:
         """Switch to specified provider.
@@ -229,7 +227,7 @@ class ProviderSwitcher:
     def _update_codex(
         self,
         provider: ProviderConfig,
-        token_override: Optional[str] = None,
+        token_override: str | None = None,
     ) -> dict[str, Any]:
         """Update Codex auth.json for OpenAI-compatible providers.
 
@@ -281,8 +279,8 @@ class ProviderSwitcher:
         display_name: str,
         base_url: str,
         token_env: str,
-        openai_base_url: Optional[str] = None,
-        openai_token_env: Optional[str] = None,
+        openai_base_url: str | None = None,
+        openai_token_env: str | None = None,
         description: str = "",
     ) -> bool:
         """Add a custom provider to user configuration.
@@ -307,7 +305,7 @@ class ProviderSwitcher:
             try:
                 import yaml
 
-                with open(PROVIDERS_FILE, "r", encoding="utf-8") as f:
+                with open(PROVIDERS_FILE, encoding="utf-8") as f:
                     providers_data = yaml.safe_load(f) or {}
             except (OSError, yaml.YAMLError) as e:
                 from rich.console import Console
@@ -373,7 +371,7 @@ class ProviderSwitcher:
             shutil.copy2(path, backup)
             return {}
 
-    def _backup_file(self, path: Path) -> Optional[Path]:
+    def _backup_file(self, path: Path) -> Path | None:
         """Create timestamped backup of file.
 
         Args:

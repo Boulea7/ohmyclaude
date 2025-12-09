@@ -13,12 +13,11 @@ SECURITY WARNING:
 - The .secrets file is protected with 0600 permissions but this is defense-in-depth only.
 """
 
-from pathlib import Path
-from typing import Optional
 import base64
 import json
 import os
 import shutil
+from pathlib import Path
 
 import keyring
 from keyring.errors import KeyringError
@@ -50,7 +49,7 @@ class CredentialManager:
             service_name: Service name for keyring storage
         """
         self.service_name = service_name
-        self._keyring_available: Optional[bool] = None
+        self._keyring_available: bool | None = None
 
     @property
     def keyring_available(self) -> bool:
@@ -64,7 +63,7 @@ class CredentialManager:
                 self._keyring_available = False
         return self._keyring_available
 
-    def get(self, key: str, env_var: Optional[str] = None) -> Optional[str]:
+    def get(self, key: str, env_var: str | None = None) -> str | None:
         """Get credential from the first available source.
 
         Args:
@@ -147,7 +146,7 @@ class CredentialManager:
         secrets = self._load_secrets_file()
         return list(secrets.keys())
 
-    def _get_from_file(self, key: str) -> Optional[str]:
+    def _get_from_file(self, key: str) -> str | None:
         """Read credential from local secrets file.
 
         Args:
@@ -179,6 +178,16 @@ class CredentialManager:
         Returns:
             True if stored successfully
         """
+        import sys
+
+        # Print security warning to stderr
+        sys.stderr.write(
+            "\n\033[33m[SECURITY WARNING]\033[0m Keyring unavailable. "
+            "Credential stored with Base64 encoding (NOT encrypted).\n"
+            f"  Location: {SECRETS_FILE}\n"
+            "  Recommendation: Use environment variables for sensitive tokens.\n\n"
+        )
+
         try:
             secrets = self._load_secrets_file()
             # Base64 encode for basic obfuscation (NOT encryption - see module docstring)

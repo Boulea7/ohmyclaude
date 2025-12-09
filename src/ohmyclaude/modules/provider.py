@@ -5,10 +5,8 @@ for provider management. Supports official Anthropic API and third-party
 providers like GLM (Zhipu AI), 88Code, and DeepSeek.
 """
 
-from typing import Optional
 
 from ohmyclaude.models.provider import ProviderConfig
-
 
 # Keys to clean up when switching FROM specific providers
 # These keys are provider-specific and should be removed when switching away
@@ -84,7 +82,7 @@ BUILTIN_PROVIDERS: dict[str, ProviderConfig] = {
 }
 
 
-def get_provider(name: str) -> Optional[ProviderConfig]:
+def get_provider(name: str) -> ProviderConfig | None:
     """Get built-in provider configuration by name.
 
     Args:

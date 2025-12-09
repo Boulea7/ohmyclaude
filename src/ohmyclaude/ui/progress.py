@@ -3,7 +3,8 @@
 Provides visual feedback during installation and configuration operations.
 """
 
-from typing import Callable, Iterator, TypeVar
+from collections.abc import Callable, Iterator
+from typing import TypeVar
 
 from rich.console import Console
 from rich.progress import (

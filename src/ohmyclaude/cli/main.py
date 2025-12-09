@@ -14,16 +14,16 @@ from rich.table import Table
 
 from ohmyclaude import __version__
 from ohmyclaude.core import (
-    BackupManager,
-    ConfigEngine,
-    Installer,
-    ShellIntegration,
     CLAUDE_MD_FILE,
     COMMANDS_DIR,
     HOOKS_DIR,
     SETTINGS_FILE,
+    BackupManager,
+    ConfigEngine,
+    Installer,
+    ShellIntegration,
 )
-from ohmyclaude.ui.logo import show_logo, show_welcome, show_goodbye
+from ohmyclaude.ui.logo import show_logo, show_welcome
 from ohmyclaude.ui.prompts import select_preset
 
 console = Console()
@@ -274,13 +274,13 @@ def init(remove: bool, status: bool) -> None:
 
     if status:
         info = get_shell_info()
-        console.print(f"[bold]Shell Integration Status[/]\n")
+        console.print("[bold]Shell Integration Status[/]\n")
         console.print(f"  Shell type:    [cyan]{info['shell']}[/]")
         console.print(f"  RC file:       [dim]{info['rc_path']}[/]")
         if info["is_installed"]:
-            console.print(f"  Status:        [green]Configured[/]")
+            console.print("  Status:        [green]Configured[/]")
         else:
-            console.print(f"  Status:        [yellow]Not configured[/]")
+            console.print("  Status:        [yellow]Not configured[/]")
         return
 
     if remove:
@@ -336,8 +336,8 @@ def switch(
         ohmyclaude switch custom -u https://api.example.com -t $TOKEN
     """
     from ohmyclaude.core.provider import ProviderSwitcher
-    from ohmyclaude.ui.tables import create_provider_table
     from ohmyclaude.ui.prompts import select_provider
+    from ohmyclaude.ui.tables import create_provider_table
 
     switcher = ProviderSwitcher()
 
@@ -354,6 +354,26 @@ def switch(
     if not provider:
         provider = select_provider()
         console.print()
+
+    # Handle "custom" provider selection - guide user to use provider add
+    if provider == "custom":
+        if not base_url:
+            console.print("[yellow]Custom provider requires additional configuration.[/]")
+            console.print()
+            console.print("[bold]To add a custom provider, use:[/]")
+            console.print(
+                "  [cyan]omc provider add <name> --base-url <url> --token-env <env>[/]"
+            )
+            console.print()
+            console.print("[bold]Example:[/]")
+            console.print(
+                "  [dim]omc provider add myvendor \\\n"
+                "      --base-url https://api.example.com --token-env MY_TOKEN[/]"
+            )
+            console.print("  [dim]omc switch myvendor[/]")
+            return
+        # If base_url provided via CLI, treat as direct custom switch
+        provider = "custom"
 
     # Execute switch
     try:
@@ -543,7 +563,7 @@ def export_config(output: str) -> None:
             tar.add(backup_path, arcname=backup_path.name)
 
         console.print(f"[green]Configuration exported to: {output_path}[/]")
-        console.print(f"[dim]Archive contains: settings.json, CLAUDE.md, commands/[/]")
+        console.print("[dim]Archive contains: settings.json, CLAUDE.md, commands/[/]")
     except Exception as e:
         console.print(f"[red]Export failed: {e}[/]")
         raise SystemExit(1)

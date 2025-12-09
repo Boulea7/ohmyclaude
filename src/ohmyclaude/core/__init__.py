@@ -6,26 +6,26 @@ management, credential storage, and shell environment integration.
 
 # Phase 1.5 - Core tools
 from ohmyclaude.core.atomic import atomic_write, save_json, save_text
-from ohmyclaude.core.merge import deep_merge
+from ohmyclaude.core.backup import BackupManager
+from ohmyclaude.core.config import ConfigEngine
+from ohmyclaude.core.installer import Installer, InstallResult
 from ohmyclaude.core.keyring import CredentialManager
-from ohmyclaude.core.shell import ShellIntegration, get_shell_info
+from ohmyclaude.core.merge import deep_merge
 
 # Phase 2 - Configuration management
 from ohmyclaude.core.paths import (
+    BACKUPS_DIR,
     CLAUDE_DIR,
     CLAUDE_MD_FILE,
-    SETTINGS_FILE,
     COMMANDS_DIR,
     HOOKS_DIR,
     OHMYCLAUDE_DIR,
-    BACKUPS_DIR,
+    SETTINGS_FILE,
     ensure_claude_dirs,
     ensure_ohmyclaude_dirs,
 )
-from ohmyclaude.core.config import ConfigEngine
-from ohmyclaude.core.backup import BackupManager
-from ohmyclaude.core.installer import Installer, InstallResult
 from ohmyclaude.core.provider import ProviderSwitcher
+from ohmyclaude.core.shell import ShellIntegration, get_shell_info
 
 __all__ = [
     # Atomic file operations

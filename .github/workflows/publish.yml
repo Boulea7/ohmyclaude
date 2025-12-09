@@ -24,10 +24,18 @@ jobs:
       - name: Install dependencies
         run: uv pip install --system -e ".[dev]"
 
-      - name: Run tests
+      - name: Run linting
         run: |
-          uv pip install --system pytest
-          pytest tests/ -v
+          uv pip install --system ruff
+          ruff check src/ tests/
+
+      - name: Run type checking
+        run: |
+          uv pip install --system mypy
+          mypy src/ohmyclaude --ignore-missing-imports
+
+      - name: Run tests
+        run: pytest tests/ -v
 
   build:
     needs: test

@@ -4,7 +4,6 @@ This module provides the ConfigEngine class for loading presets, rendering templ
 and generating Claude Code configurations.
 """
 
-from pathlib import Path
 from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, PackageLoader, StrictUndefined
@@ -13,8 +12,7 @@ from ruamel.yaml import YAML
 from ohmyclaude.core.merge import deep_merge
 from ohmyclaude.core.paths import CLAUDE_DIR, get_presets_dir, get_project_templates_dir
 from ohmyclaude.models.presets import PresetConfig
-from ohmyclaude.models.settings import McpServerConfig, SettingsConfig
-
+from ohmyclaude.models.settings import SettingsConfig
 
 # Configure YAML parser to preserve comments
 yaml = YAML()

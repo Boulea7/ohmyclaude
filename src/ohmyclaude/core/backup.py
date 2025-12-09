@@ -19,7 +19,6 @@ from ohmyclaude.core.paths import (
     ensure_ohmyclaude_dirs,
 )
 
-
 # Regex for safe backup names (alphanumeric, dash, underscore, dot)
 _SAFE_NAME_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
 

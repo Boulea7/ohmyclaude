@@ -4,11 +4,10 @@ This module provides utilities for managing shell RC file modifications
 using sentinel blocks to ensure idempotent operations.
 """
 
-from pathlib import Path
-from typing import Optional
 import os
 import re
 import shlex
+from pathlib import Path
 
 # Sentinel markers for idempotent injection
 SENTINEL_START = "# >>> ohmyclaude initialize >>>"
@@ -83,7 +82,7 @@ class ShellIntegration:
             return config_dir / "config.fish"
         return home / ".bashrc"
 
-    def inject_source(self, env_file: Optional[Path] = None) -> bool:
+    def inject_source(self, env_file: Path | None = None) -> bool:
         """Inject source command into RC file using sentinel blocks.
 
         This operation is idempotent - safe to call multiple times.

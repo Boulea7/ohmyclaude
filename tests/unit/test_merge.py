@@ -1,8 +1,7 @@
 """Unit tests for deep merge algorithm."""
 
-import pytest
 
-from ohmyclaude.core.merge import deep_merge, _deep_copy
+from ohmyclaude.core.merge import _deep_copy, deep_merge
 
 
 class TestDeepMerge:

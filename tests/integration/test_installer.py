@@ -2,12 +2,12 @@
 
 import json
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ohmyclaude.core.installer import Installer, InstallResult
 from ohmyclaude.core.config import ConfigEngine
+from ohmyclaude.core.installer import Installer, InstallResult
 from ohmyclaude.models.presets import PresetConfig
 
 

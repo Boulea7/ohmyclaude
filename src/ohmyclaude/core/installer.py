@@ -3,17 +3,15 @@
 This module provides the Installer class that writes configurations to target locations.
 """
 
-import json
 import os
 import shutil
-from pathlib import Path
 from typing import Any
 
 from ohmyclaude.core.atomic import atomic_write, save_json
 from ohmyclaude.core.config import ConfigEngine
 from ohmyclaude.core.paths import (
     AGENTS_DIR,
-    CLAUDE_DIR,
+    CLAUDE_DIR,  # Re-exported for test patching
     CLAUDE_MD_FILE,
     COMMANDS_DIR,
     HOOKS_DIR,
