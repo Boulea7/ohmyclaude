@@ -136,10 +136,15 @@ class BackupManager:
             shutil.copytree(COMMANDS_DIR, commands_backup, dirs_exist_ok=True)
 
         # Create metadata
+        files = [
+            str(f.relative_to(backup_path))
+            for f in backup_path.rglob("*")
+            if f.is_file()
+        ]
         metadata = {
             "timestamp": timestamp,
             "tag": tag,
-            "files": [str(f.relative_to(backup_path)) for f in backup_path.rglob("*") if f.is_file()],
+            "files": files,
         }
         with atomic_write(backup_path / "metadata.json") as f:
             json.dump(metadata, f, indent=2)

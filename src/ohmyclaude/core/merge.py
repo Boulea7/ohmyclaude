@@ -6,15 +6,15 @@ with support for array deduplication and custom merge strategies.
 
 from typing import Any
 
-from deepmerge import Merger
+from deepmerge import Merger  # type: ignore[attr-defined]
 
 
 def _merge_arrays_append(
     merger: Merger,
-    path: list,
-    base: list,
-    nxt: list,
-) -> list:
+    path: list[Any],
+    base: list[Any],
+    nxt: list[Any],
+) -> list[Any]:
     """Append strategy: combine arrays without duplicates.
 
     Preserves order from base, then appends unique items from nxt.
@@ -64,7 +64,7 @@ _config_merger = Merger(
 )
 
 
-def deep_merge(base: dict, override: dict) -> dict:
+def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Deep merge two configuration dictionaries.
 
     Rules:

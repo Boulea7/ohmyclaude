@@ -34,11 +34,15 @@ dependencies = [
     # Configuration management
     "pydantic>=2.0.0",
     "ruamel.yaml>=0.18.0",
+    "PyYAML>=6.0.0",
     "jinja2>=3.0.0",
     "deepmerge>=1.1.0",
 
     # Credentials
     "keyring>=24.0.0",
+
+    # Version checking
+    "packaging>=21.0",
 ]
 
 [project.optional-dependencies]
@@ -55,10 +59,9 @@ ohmyclaude = "ohmyclaude.cli.main:cli"
 omc = "ohmyclaude.cli.main:cli"
 
 [project.urls]
-Homepage = "https://github.com/ohmyclaude/ohmyclaude"
-Documentation = "https://ohmyclaude.dev/docs"
-Repository = "https://github.com/ohmyclaude/ohmyclaude"
-Issues = "https://github.com/ohmyclaude/ohmyclaude/issues"
+Homepage = "https://github.com/Boulea7/ohmyclaude"
+Repository = "https://github.com/Boulea7/ohmyclaude"
+Issues = "https://github.com/Boulea7/ohmyclaude/issues"
 
 # Ruff configuration
 [tool.ruff]
@@ -68,12 +71,23 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
+[tool.ruff.lint.per-file-ignores]
+"src/ohmyclaude/models/settings.py" = ["N815"]
+
 # MyPy configuration
 [tool.mypy]
 python_version = "3.10"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = "InquirerPy.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "deepmerge.*"
+ignore_missing_imports = true
 
 # Pytest configuration
 [tool.pytest.ini_options]
@@ -84,7 +98,30 @@ addopts = "-v --cov=ohmyclaude --cov-report=term-missing"
 source = ["src/ohmyclaude"]
 branch = true
 
+[tool.coverage.report]
+fail_under = 50
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", "docs"]
+skips = ["B101", "B106", "B202", "B310", "B701"]
+
 # Hatchling configuration
 [tool.hatch.build.targets.wheel]
 packages = ["src/ohmyclaude"]
+
+# Include templates from root directory
+[tool.hatch.build.targets.wheel.force-include]
+"templates/presets" = "ohmyclaude/templates/presets"
+"templates/mcp" = "ohmyclaude/templates/mcp"
+
+[dependency-groups]
+dev = [
+    "types-pyyaml>=6.0.12.20250915",
+]
 

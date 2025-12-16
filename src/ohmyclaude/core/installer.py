@@ -11,7 +11,7 @@ from ohmyclaude.core.atomic import atomic_write, save_json
 from ohmyclaude.core.config import ConfigEngine
 from ohmyclaude.core.paths import (
     AGENTS_DIR,
-    CLAUDE_DIR,  # Re-exported for test patching
+    CLAUDE_DIR,  # noqa: F401
     CLAUDE_MD_FILE,
     COMMANDS_DIR,
     HOOKS_DIR,
@@ -25,7 +25,7 @@ from ohmyclaude.models.presets import PresetConfig
 class InstallResult:
     """Result of an installation operation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize install result."""
         self.installed: list[dict[str, Any]] = []
         self.skipped: list[dict[str, Any]] = []
@@ -150,7 +150,8 @@ class Installer:
             # Convert to dict for JSON serialization
             settings_dict = settings.model_dump(exclude_none=True)
 
-            save_json(SETTINGS_FILE, settings_dict)
+            # Save with restrictive permissions (0o600) to protect sensitive data
+            save_json(SETTINGS_FILE, settings_dict, file_mode=0o600)
 
             self.result.add_installed(
                 item_type="settings",
@@ -278,10 +279,11 @@ class Installer:
 
         # Warn if hooks_preset is unknown
         if hooks_preset not in preset_scripts:
+            expected = list(preset_scripts.keys())
             self.result.add_skipped(
                 item_type="hook",
                 name=f"hooks_preset:{hooks_preset}",
-                reason=f"Unknown hooks preset '{hooks_preset}', expected one of: {list(preset_scripts.keys())}",
+                reason=f"Unknown hooks preset '{hooks_preset}', expected one of: {expected}",
             )
             return
 
@@ -395,6 +397,13 @@ class Installer:
     def _safe_segment(value: str, label: str) -> str:
         """Guard against path traversal in user-supplied names.
 
+        This method performs comprehensive validation including:
+        - Empty value check
+        - URL-encoded traversal detection
+        - Null byte detection
+        - Path separator detection
+        - Whitelist character validation
+
         Args:
             value: User-supplied segment (template name, command name, etc.)
             label: Human-readable label for error messages
@@ -405,10 +414,40 @@ class Installer:
         Raises:
             ValueError: If the value contains path traversal patterns
         """
+        import re
+        import urllib.parse
+
         if not value:
             raise ValueError(f"Invalid {label} name: empty value")
-        if value.startswith(".") or ".." in value or "/" in value or "\\" in value:
+
+        # Decode URL encoding to detect bypass attempts
+        try:
+            decoded = urllib.parse.unquote(value)
+        except Exception:
+            decoded = value
+
+        # Check for null bytes (string truncation attack)
+        if "\x00" in value or "\x00" in decoded:
+            raise ValueError(f"Invalid {label} name: null byte detected")
+
+        # Check for path traversal patterns in both original and decoded
+        if (
+            value.startswith(".")
+            or ".." in value
+            or ".." in decoded
+            or "/" in value
+            or "/" in decoded
+            or "\\" in value
+            or "\\" in decoded
+        ):
             raise ValueError(f"Invalid {label} name: {value!r}")
+
+        # Whitelist approach: only allow safe characters
+        if not re.match(r"^[a-zA-Z0-9_-]+$", value):
+            raise ValueError(
+                f"Invalid {label} name: only alphanumeric, underscore, and dash allowed"
+            )
+
         return value
 
     def _get_user_name(self) -> str:

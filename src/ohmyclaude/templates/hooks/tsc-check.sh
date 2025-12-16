@@ -3,9 +3,20 @@
 # TSC Hook with Visible Output
 # Uses stderr for visibility in Claude Code main interface
 
+# Set restrictive umask for created files
+umask 077
+
 CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$HOME/project}"
 HOOK_INPUT=$(cat)
 SESSION_ID=$(echo "$HOOK_INPUT" | jq -r '.session_id // "default"')
+
+# Sanitize session_id to prevent path traversal / filesystem injection
+SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'A-Za-z0-9._-')
+SESSION_ID=${SESSION_ID:0:64}
+if [[ -z "$SESSION_ID" ]]; then
+    SESSION_ID="default"
+fi
+
 CACHE_DIR="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/$SESSION_ID"
 
 # Create cache directory

@@ -4,6 +4,9 @@ set -e
 # Stop event hook that runs build checks and provides instructions for error resolution
 # This runs when Claude Code finishes responding
 
+# Set restrictive umask for created files
+umask 077
+
 CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$HOME/project}"
 
 # Read event information from stdin
@@ -11,6 +14,13 @@ event_info=$(cat)
 
 # Extract session ID
 session_id=$(echo "$event_info" | jq -r '.session_id // "default"')
+
+# Sanitize session_id to prevent path traversal / filesystem injection
+session_id=$(echo "$session_id" | tr -cd 'A-Za-z0-9._-')
+session_id=${session_id:0:64}
+if [[ -z "$session_id" ]]; then
+    session_id="default"
+fi
 
 # Cache directory in project
 cache_dir="$CLAUDE_PROJECT_DIR/.claude/tsc-cache/$session_id"

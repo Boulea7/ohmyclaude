@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 from typing import Any, Literal
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -45,13 +45,12 @@ class McpServerConfig(BaseModel):
         Raises:
             ValueError: If strict=True and required env vars are missing.
         """
-        result: dict[str, Any] = {}
+        result: dict[str, Any] = {"transport": self.transport}
 
         if self.transport == "stdio":
             result["command"] = self.command
             result["args"] = self.args
         else:  # sse
-            result["type"] = "sse"
             result["url"] = self.url
 
         # Process environment variables
@@ -128,13 +127,20 @@ class McpPackageRegistry:
         self._bundles: dict[str, dict[str, Any]] = {}
 
         if packages_file is None:
-            # Use bundled template
-            packages_file = (
-                Path(__file__).parent.parent.parent.parent
-                / "templates"
-                / "mcp"
-                / "mcp_packages.yaml"
-            )
+            # Use bundled template from package or development mode
+            from ohmyclaude.core.paths import get_project_templates_dir
+
+            templates_dir = get_project_templates_dir()
+            packages_file = templates_dir / "mcp" / "mcp_packages.yaml"
+
+            # Fallback to root templates for development
+            if not packages_file.exists():
+                packages_file = (
+                    Path(__file__).parent.parent.parent.parent
+                    / "templates"
+                    / "mcp"
+                    / "mcp_packages.yaml"
+                )
 
         self._load_packages(packages_file)
 

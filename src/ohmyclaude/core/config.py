@@ -34,7 +34,7 @@ class ConfigEngine:
         >>> settings = engine.generate_settings(preset)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the configuration engine."""
         self._init_template_env()
         self.presets_dir = get_presets_dir()
@@ -148,24 +148,54 @@ class ConfigEngine:
             "hooks": {},
         }
 
-        # Add MCP servers
-        for name, server in preset.get_enabled_mcp_servers().items():
-            server_config: dict[str, Any] = {}
+        # Add MCP servers from package registry (mcp_packages.yaml)
+        if preset.mcp_packages or preset.mcp_packages_optional:
+            from ohmyclaude.modules.mcp import McpPackageRegistry
 
-            if server.transport == "stdio":
-                if server.command:
-                    server_config["command"] = server.command
-                if server.args:
-                    server_config["args"] = server.args
-            elif server.transport == "sse":
-                if not server.url:
+            registry = McpPackageRegistry()
+            package_names = list(preset.mcp_packages) + list(preset.mcp_packages_optional)
+            servers, _missing_keys = registry.resolve_packages(package_names, strict=True)
+
+            for name, server in servers.items():
+                settings_dict["mcpServers"][name] = server.to_settings_dict(strict=False)
+
+        # Apply explicit server overrides (and allow disabling)
+        for name, server_preset in preset.mcp_servers.items():
+            if not server_preset.enabled:
+                settings_dict["mcpServers"].pop(name, None)
+                continue
+
+            existing = settings_dict["mcpServers"].get(name, {})
+            server_config: dict[str, Any] = dict(existing) if isinstance(existing, dict) else {}
+
+            # Always set transport field
+            server_config["transport"] = server_preset.transport
+
+            if server_preset.transport == "stdio":
+                if server_preset.command:
+                    server_config["command"] = server_preset.command
+                if server_preset.args:
+                    server_config["args"] = server_preset.args
+                server_config.pop("url", None)  # Remove url if switching from SSE
+            elif server_preset.transport == "sse":
+                if server_preset.url:
+                    server_config["url"] = server_preset.url
+                elif "url" not in server_config:
                     raise ValueError(f"Missing url for sse MCP server '{name}'")
-                server_config["url"] = server.url
+                server_config.pop("command", None)  # Remove stdio fields
+                server_config.pop("args", None)
             else:
-                raise ValueError(f"Unsupported transport '{server.transport}' for MCP '{name}'")
+                raise ValueError(
+                    f"Unsupported transport '{server_preset.transport}' for MCP '{name}'"
+                )
 
-            if server.env:
-                server_config["env"] = server.env
+            if server_preset.env:
+                # Merge env variables
+                merged_env: dict[str, str] = {}
+                if isinstance(server_config.get("env"), dict):
+                    merged_env.update(server_config["env"])
+                merged_env.update(server_preset.env)
+                server_config["env"] = merged_env
 
             settings_dict["mcpServers"][name] = server_config
 
@@ -184,7 +214,11 @@ class ConfigEngine:
 
         return SettingsConfig(**settings_dict)
 
-    def merge_configs(self, base: dict, override: dict) -> dict:
+    def merge_configs(
+        self,
+        base: dict[str, Any],
+        override: dict[str, Any],
+    ) -> dict[str, Any]:
         """Deep merge two configuration dictionaries.
 
         Args:

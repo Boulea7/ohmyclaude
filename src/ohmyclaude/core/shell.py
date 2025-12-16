@@ -8,6 +8,7 @@ import os
 import re
 import shlex
 from pathlib import Path
+from typing import TypedDict
 
 # Sentinel markers for idempotent injection
 SENTINEL_START = "# >>> ohmyclaude initialize >>>"
@@ -45,7 +46,7 @@ class ShellIntegration:
         >>> shell.inject_source(Path("~/.ohmyclaude/env.sh"))
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize shell integration with auto-detection."""
         self.shell = self._detect_shell()
         self.rc_path = self._get_rc_path()
@@ -206,7 +207,13 @@ test -f '{env_file}'; and source '{env_file}'
 {SENTINEL_END}"""
 
 
-def get_shell_info() -> dict:
+class ShellInfo(TypedDict):
+    shell: str
+    rc_path: str
+    is_installed: bool
+
+
+def get_shell_info() -> ShellInfo:
     """Get information about the current shell environment.
 
     Returns:

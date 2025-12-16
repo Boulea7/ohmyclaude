@@ -3,6 +3,7 @@
 This module defines all commonly used paths for Claude Code configuration.
 """
 
+import os
 from pathlib import Path
 
 # User home directory
@@ -48,18 +49,36 @@ CODEX_DIR = HOME / ".codex"
 CODEX_AUTH_FILE = CODEX_DIR / "auth.json"
 
 
+def _chmod_dir(path: Path, mode: int) -> None:
+    """Best-effort chmod for directories (POSIX only)."""
+    if os.name == "nt":
+        return
+    try:
+        path.chmod(mode)
+    except OSError:
+        pass
+
+
 def ensure_claude_dirs() -> None:
     """Ensure Claude Code directories exist."""
     CLAUDE_DIR.mkdir(parents=True, exist_ok=True)
     COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
     HOOKS_DIR.mkdir(parents=True, exist_ok=True)
     AGENTS_DIR.mkdir(parents=True, exist_ok=True)
+    # Set restrictive permissions for POSIX systems
+    _chmod_dir(CLAUDE_DIR, 0o700)
+    _chmod_dir(COMMANDS_DIR, 0o700)
+    _chmod_dir(HOOKS_DIR, 0o700)
+    _chmod_dir(AGENTS_DIR, 0o700)
 
 
 def ensure_ohmyclaude_dirs() -> None:
     """Ensure OhMyClaude directories exist."""
     OHMYCLAUDE_DIR.mkdir(parents=True, exist_ok=True)
     BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
+    # Set restrictive permissions for POSIX systems
+    _chmod_dir(OHMYCLAUDE_DIR, 0o700)
+    _chmod_dir(BACKUPS_DIR, 0o700)
 
 
 def get_project_templates_dir() -> Path:

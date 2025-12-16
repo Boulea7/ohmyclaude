@@ -213,7 +213,7 @@ class CredentialManager:
             return True
         return False
 
-    def _load_secrets_file(self) -> dict:
+    def _load_secrets_file(self) -> dict[str, str]:
         """Load secrets from local file.
 
         If the file is corrupted, it will be backed up with a .corrupt suffix
@@ -226,8 +226,14 @@ class CredentialManager:
             return {}
         try:
             data = json.loads(SECRETS_FILE.read_text())
-            # Ensure we always return a dict
-            return data if isinstance(data, dict) else {}
+            if not isinstance(data, dict):
+                return {}
+
+            secrets: dict[str, str] = {}
+            for key, value in data.items():
+                if isinstance(key, str) and isinstance(value, str):
+                    secrets[key] = value
+            return secrets
         except (json.JSONDecodeError, OSError):
             # Backup corrupted file before returning empty dict
             corrupt_path = SECRETS_FILE.with_suffix(".corrupt")
@@ -237,7 +243,7 @@ class CredentialManager:
                 pass  # Best effort - continue even if backup fails
             return {}
 
-    def _save_secrets_file(self, secrets: dict) -> None:
+    def _save_secrets_file(self, secrets: dict[str, str]) -> None:
         """Save secrets to local file with atomic write.
 
         Args:

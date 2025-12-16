@@ -526,6 +526,35 @@ def provider_add(
         raise SystemExit(1)
 
 
+@provider.command("remove")
+@click.argument("name")
+def provider_remove(name: str) -> None:
+    """Remove a custom API provider.
+
+    \b
+    Examples:
+        ohmyclaude provider remove myvendor
+    """
+    from ohmyclaude.core.provider import ProviderSwitcher
+
+    switcher = ProviderSwitcher()
+    provider_config = switcher.get_provider(name)
+
+    if not provider_config:
+        console.print(f"[yellow]Provider '{name}' not found.[/]")
+        raise SystemExit(1)
+
+    if provider_config.is_builtin:
+        console.print(f"[red]Cannot remove built-in provider '{name}'.[/]")
+        raise SystemExit(1)
+
+    if switcher.remove_custom_provider(name):
+        console.print(f"[green]✓ Removed custom provider: {name}[/]")
+    else:
+        console.print(f"[red]Failed to remove provider '{name}'.[/]")
+        raise SystemExit(1)
+
+
 @cli.command("export")
 @click.argument("output", type=click.Path())
 def export_config(output: str) -> None:

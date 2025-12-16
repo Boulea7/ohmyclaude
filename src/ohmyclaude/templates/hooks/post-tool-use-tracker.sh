@@ -4,6 +4,9 @@ set -e
 # Post-tool-use hook that tracks edited files and their repos
 # This runs after Edit, MultiEdit, or Write tools complete successfully
 
+# Set restrictive umask for created files
+umask 077
+
 CLAUDE_PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$HOME/project}"
 
 # Read tool information from stdin
@@ -12,6 +15,13 @@ tool_info=$(cat)
 # Extract relevant data
 tool_name=$(echo "$tool_info" | jq -r '.tool_name // empty')
 session_id=$(echo "$tool_info" | jq -r '.session_id // "default"')
+
+# Sanitize session_id to prevent path traversal / filesystem injection
+session_id=$(echo "$session_id" | tr -cd 'A-Za-z0-9._-')
+session_id=${session_id:0:64}
+if [[ -z "$session_id" ]]; then
+    session_id="default"
+fi
 
 # Skip if not an edit tool
 if [[ ! "$tool_name" =~ ^(Edit|MultiEdit|Write)$ ]]; then

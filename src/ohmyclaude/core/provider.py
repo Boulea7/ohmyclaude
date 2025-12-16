@@ -6,7 +6,9 @@ including backup management, settings update, and Codex auth synchronization.
 
 import json
 import os
+import re
 import shutil
+import urllib.parse
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -25,6 +27,84 @@ from ohmyclaude.modules.provider import (
 )
 
 BACKUP_SUFFIX_FMT = "%Y%m%d-%H%M%S"
+
+# Security: Allowed URL schemes
+ALLOWED_URL_SCHEMES = frozenset({"https", "http"})
+LOCALHOST_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+
+
+def _validate_api_url(url: str) -> str:
+    """Validate an API base URL for security.
+
+    Args:
+        url: URL to validate
+
+    Returns:
+        The validated URL
+
+    Raises:
+        ValueError: If the URL is invalid or potentially dangerous
+    """
+    if not url:
+        raise ValueError("URL cannot be empty")
+
+    try:
+        parsed = urllib.parse.urlparse(url)
+    except Exception as e:
+        raise ValueError(f"Invalid URL format: {e}")
+
+    # Check scheme
+    if parsed.scheme not in ALLOWED_URL_SCHEMES:
+        raise ValueError(f"Invalid URL scheme '{parsed.scheme}': only HTTPS/HTTP allowed")
+
+    # HTTP only allowed for localhost
+    if parsed.scheme == "http" and parsed.hostname not in LOCALHOST_HOSTS:
+        raise ValueError(f"HTTP only allowed for localhost, not '{parsed.hostname}'")
+
+    # Must have a host
+    if not parsed.hostname:
+        raise ValueError("URL must have a hostname")
+
+    # Check for suspicious patterns
+    suspicious = ["<", ">", '"', "'", "{", "}", "|", "^", "`"]
+    for char in suspicious:
+        if char in url:
+            raise ValueError(f"URL contains suspicious character: '{char}'")
+
+    return url
+
+
+def _validate_api_token(token: str) -> str:
+    """Validate an API token format for security.
+
+    Args:
+        token: Token to validate
+
+    Returns:
+        The validated token
+
+    Raises:
+        ValueError: If the token format is invalid
+    """
+    if not token:
+        raise ValueError("Token cannot be empty")
+
+    # Length check
+    if len(token) < 20:
+        raise ValueError("Token too short (minimum 20 characters)")
+
+    if len(token) > 500:
+        raise ValueError("Token too long (maximum 500 characters)")
+
+    # Check for whitespace
+    if token != token.strip():
+        raise ValueError("Token cannot have leading/trailing whitespace")
+
+    # Must be alphanumeric with allowed special chars
+    if not re.match(r"^[a-zA-Z0-9_.-]+$", token):
+        raise ValueError("Token contains invalid characters")
+
+    return token
 
 
 class ProviderSwitcher:
@@ -55,17 +135,31 @@ class ProviderSwitcher:
         self._custom_providers.clear()
 
         try:
-            import yaml
+            import yaml  # type: ignore[import-untyped]
 
             with open(PROVIDERS_FILE, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
 
-            for name, config in data.get("providers", {}).items():
-                self._custom_providers[name] = ProviderConfig(
-                    name=name,
-                    is_builtin=False,
-                    **config,
-                )
+            # Validate structure
+            if not isinstance(data, dict):
+                return
+
+            providers = data.get("providers", {})
+            if not isinstance(providers, dict):
+                return
+
+            for name, config in providers.items():
+                if not isinstance(name, str) or not isinstance(config, dict):
+                    continue
+                try:
+                    self._custom_providers[name] = ProviderConfig(
+                        name=name,
+                        is_builtin=False,
+                        **config,
+                    )
+                except (ValueError, TypeError):
+                    # Skip invalid provider config
+                    continue
         except yaml.YAMLError as e:
             from rich.console import Console
 
@@ -109,7 +203,7 @@ class ProviderSwitcher:
 
         # Check for stored provider marker (handles OpenAI-only providers like deepseek)
         stored_provider = env.get("_OHMYCLAUDE_PROVIDER")
-        if stored_provider:
+        if isinstance(stored_provider, str) and stored_provider:
             return stored_provider
 
         base_url = env.get("ANTHROPIC_BASE_URL")
@@ -143,6 +237,27 @@ class ProviderSwitcher:
         Returns:
             SwitchResult with operation details
         """
+        # Security: Validate user-provided inputs
+        if token:
+            try:
+                _validate_api_token(token)
+            except ValueError as e:
+                return SwitchResult(
+                    success=False,
+                    provider_name=provider_name,
+                    message=f"Invalid token: {e}",
+                )
+
+        if base_url:
+            try:
+                _validate_api_url(base_url)
+            except ValueError as e:
+                return SwitchResult(
+                    success=False,
+                    provider_name=provider_name,
+                    message=f"Invalid base URL: {e}",
+                )
+
         # 1. Get provider configuration
         provider = self.get_provider(provider_name)
 
@@ -205,7 +320,8 @@ class ProviderSwitcher:
                     env_updates[key] = None  # Mark for deletion
 
         settings = self._apply_env(settings, env_updates)
-        save_json(SETTINGS_FILE, settings)
+        # Save with restrictive permissions to protect API tokens
+        save_json(SETTINGS_FILE, settings, file_mode=0o600)
 
         result = SwitchResult(
             success=True,
@@ -266,7 +382,8 @@ class ProviderSwitcher:
         auth["OPENAI_API_KEY"] = openai_token
         auth["OPENAI_BASE_URL"] = provider.openai_base_url
 
-        save_json(CODEX_AUTH_FILE, auth)
+        # Save with restrictive permissions to protect API tokens
+        save_json(CODEX_AUTH_FILE, auth, file_mode=0o600)
 
         return {
             "updated": True,
@@ -297,20 +414,45 @@ class ProviderSwitcher:
         Returns:
             True if added successfully
         """
+        import yaml
+        from rich.console import Console
+
+        from ohmyclaude.core.atomic import atomic_write
+        from ohmyclaude.core.security import (
+            ValidationError,
+            validate_api_url,
+            validate_env_var_name,
+            validate_path_segment,
+        )
+
+        console = Console(stderr=True)
         ensure_ohmyclaude_dirs()
+
+        # Validate user input early to avoid writing broken YAML
+        try:
+            safe_name = validate_path_segment(name, label="provider")
+            safe_base_url = validate_api_url(base_url)
+            safe_token_env = validate_env_var_name(token_env)
+            safe_openai_base_url = (
+                validate_api_url(openai_base_url) if openai_base_url else None
+            )
+            safe_openai_token_env = (
+                validate_env_var_name(openai_token_env) if openai_token_env else None
+            )
+        except (ValidationError, ValueError) as e:
+            console.print(f"[red]Invalid provider configuration: {e}[/]")
+            return False
 
         # Load existing providers
         providers_data: dict[str, Any] = {}
         if PROVIDERS_FILE.exists():
             try:
-                import yaml
-
                 with open(PROVIDERS_FILE, encoding="utf-8") as f:
-                    providers_data = yaml.safe_load(f) or {}
+                    loaded = yaml.safe_load(f) or {}
+                if isinstance(loaded, dict):
+                    providers_data = loaded
             except (OSError, yaml.YAMLError) as e:
-                from rich.console import Console
-
-                Console(stderr=True).print(
+                console.print(
                     f"[yellow]Warning: Failed to load existing providers, starting fresh: {e}[/]"
                 )
                 providers_data = {}
@@ -319,37 +461,103 @@ class ProviderSwitcher:
         if "providers" not in providers_data:
             providers_data["providers"] = {}
 
-        providers_data["providers"][name] = {
+        providers_data["providers"][safe_name] = {
             "display_name": display_name,
-            "description": description or f"Custom provider: {name}",
-            "anthropic_base_url": base_url,
-            "anthropic_token_env": token_env,
+            "description": description or f"Custom provider: {safe_name}",
+            "anthropic_base_url": safe_base_url,
+            "anthropic_token_env": safe_token_env,
         }
 
-        if openai_base_url:
-            providers_data["providers"][name]["openai_base_url"] = openai_base_url
-        if openai_token_env:
-            providers_data["providers"][name]["openai_token_env"] = openai_token_env
+        if safe_openai_base_url:
+            providers_data["providers"][safe_name]["openai_base_url"] = safe_openai_base_url
+        if safe_openai_token_env:
+            providers_data["providers"][safe_name]["openai_token_env"] = safe_openai_token_env
 
-        # Save
+        # Save atomically with restrictive permissions
         try:
-            import yaml
-
-            with open(PROVIDERS_FILE, "w", encoding="utf-8") as f:
-                yaml.dump(providers_data, f, default_flow_style=False, allow_unicode=True)
+            with atomic_write(PROVIDERS_FILE, file_mode=0o600) as f:
+                yaml.safe_dump(
+                    providers_data,
+                    f,
+                    default_flow_style=False,
+                    allow_unicode=True,
+                    sort_keys=True,
+                )
 
             # Reload custom providers
             self._load_custom_providers()
             return True
         except (OSError, yaml.YAMLError) as e:
-            from rich.console import Console
-
-            Console(stderr=True).print(
-                f"[red]Failed to save provider config: {e}[/]"
-            )
+            console.print(f"[red]Failed to save provider config: {e}[/]")
             return False
 
-    def _load_json(self, path: Path) -> dict:
+    def remove_custom_provider(self, name: str) -> bool:
+        """Remove a custom provider from user configuration.
+
+        Args:
+            name: Provider identifier to remove
+
+        Returns:
+            True if removed successfully
+        """
+        import yaml
+        from rich.console import Console
+
+        from ohmyclaude.core.atomic import atomic_write
+        from ohmyclaude.core.security import ValidationError, validate_path_segment
+
+        console = Console(stderr=True)
+
+        # Validate provider name
+        try:
+            safe_name = validate_path_segment(name, label="provider")
+        except ValidationError:
+            console.print(f"[red]Invalid provider name: {name}[/]")
+            return False
+
+        if not PROVIDERS_FILE.exists():
+            console.print("[yellow]No custom providers found[/]")
+            return False
+
+        # Load existing providers
+        try:
+            with open(PROVIDERS_FILE, encoding="utf-8") as f:
+                data = yaml.safe_load(f) or {}
+        except (OSError, yaml.YAMLError) as e:
+            console.print(f"[red]Failed to load providers: {e}[/]")
+            return False
+
+        if not isinstance(data, dict):
+            console.print("[red]Invalid providers file format[/]")
+            return False
+
+        providers = data.get("providers")
+        if not isinstance(providers, dict) or safe_name not in providers:
+            console.print(f"[yellow]Provider '{safe_name}' not found[/]")
+            return False
+
+        # Remove provider
+        providers.pop(safe_name, None)
+        data["providers"] = providers
+
+        # Save atomically
+        try:
+            with atomic_write(PROVIDERS_FILE, file_mode=0o600) as f:
+                yaml.safe_dump(
+                    data,
+                    f,
+                    default_flow_style=False,
+                    allow_unicode=True,
+                    sort_keys=True,
+                )
+            # Reload custom providers
+            self._load_custom_providers()
+            return True
+        except (OSError, yaml.YAMLError) as e:
+            console.print(f"[red]Failed to save providers: {e}[/]")
+            return False
+
+    def _load_json(self, path: Path) -> dict[str, Any]:
         """Load JSON file safely.
 
         Args:
@@ -362,13 +570,20 @@ class ProviderSwitcher:
             return {}
         try:
             with path.open("r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
         except json.JSONDecodeError:
             # Backup corrupt file
             backup = path.with_suffix(
                 path.suffix + f".corrupt-{datetime.now().strftime(BACKUP_SUFFIX_FMT)}"
             )
-            shutil.copy2(path, backup)
+            try:
+                shutil.copy2(path, backup)
+            except OSError:
+                pass  # Backup failed, continue with empty dict
+            return {}
+        except OSError:
+            # File read error (permissions, I/O error, etc.)
             return {}
 
     def _backup_file(self, path: Path) -> Path | None:
@@ -388,7 +603,11 @@ class ProviderSwitcher:
         shutil.copy2(path, backup_path)
         return backup_path
 
-    def _apply_env(self, data: dict, env_updates: dict) -> dict:
+    def _apply_env(
+        self,
+        data: dict[str, Any],
+        env_updates: dict[str, str | int | None],
+    ) -> dict[str, Any]:
         """Apply environment variable updates to settings.
 
         Args:
