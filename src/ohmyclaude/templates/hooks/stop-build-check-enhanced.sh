@@ -47,13 +47,17 @@ count_tsc_errors() {
 while IFS= read -r repo; do
     # Get TSC command for this repo
     tsc_cmd=$(grep "^$repo:tsc:" "$cache_dir/commands.txt" 2>/dev/null | cut -d':' -f3-)
-    
+
     if [[ -z "$tsc_cmd" ]]; then
         continue
     fi
-    
+
+    # Security: Execute command without eval to prevent command injection
+    # Convert command string to array for safe execution
+    read -ra cmd_array <<< "$tsc_cmd"
+
     # Run TSC and capture output
-    if ! output=$(eval "$tsc_cmd" 2>&1); then
+    if ! output=$("${cmd_array[@]}" 2>&1); then
         # TSC failed - we have errors
         has_errors=true
         

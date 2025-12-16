@@ -7,6 +7,7 @@ import shutil
 import tarfile
 import tempfile
 from pathlib import Path
+from typing import Any
 
 import click
 from rich.console import Console
@@ -23,6 +24,8 @@ from ohmyclaude.core import (
     Installer,
     ShellIntegration,
 )
+from ohmyclaude.core.security import ValidationError as SecurityValidationError
+from ohmyclaude.core.security import safe_tar_extract
 from ohmyclaude.ui.logo import show_logo, show_welcome
 from ohmyclaude.ui.prompts import select_preset
 
@@ -121,7 +124,7 @@ def setup(preset: str | None, no_interactive: bool) -> None:
     console.print("  3. Restart Claude Code to apply changes")
 
 
-def _show_install_result(result: dict) -> None:
+def _show_install_result(result: dict[str, Any]) -> None:
     """Display installation result in a table."""
     table = Table(title="Installation Summary", show_header=True, header_style="bold")
     table.add_column("Category", style="cyan")
@@ -134,7 +137,7 @@ def _show_install_result(result: dict) -> None:
     skipped = result.get("skipped", [])
     errors = result.get("errors", [])
 
-    categories = {}
+    categories: dict[str, dict[str, int]] = {}
     for item in installed:
         cat = item.get("type", "other")
         categories.setdefault(cat, {"installed": 0, "skipped": 0, "errors": 0})
@@ -246,7 +249,9 @@ def doctor() -> None:
     if ok_count == total:
         console.print("[green bold]All checks passed![/]")
     elif ok_count >= total // 2:
-        console.print(f"[yellow]{ok_count}/{total} checks passed. Some optional components missing.[/]")
+        console.print(
+            f"[yellow]{ok_count}/{total} checks passed. Some optional components missing.[/]"
+        )
     else:
         console.print(f"[red]{ok_count}/{total} checks passed. Run 'omc setup' to configure.[/]")
 
@@ -573,20 +578,58 @@ def export_config(output: str) -> None:
 
 
 def _safe_extract_tar(tar: tarfile.TarFile, dest: Path) -> None:
-    """Safely extract tar archive with path traversal protection."""
+    """Safely extract tar archive with comprehensive security checks.
+
+    This function provides protection against:
+    - Path traversal attacks (../)
+    - Symbolic link attacks
+    - Device file attacks
+    - TOCTOU attacks (extract individually)
+
+    Args:
+        tar: Open tarfile object
+        dest: Destination directory
+
+    Raises:
+        ValueError: If security checks fail
+    """
     dest = dest.resolve()
+
+    # Phase 1: Validate ALL members before extraction
     for member in tar.getmembers():
-        # Check for path traversal attacks
+        # Normalize and resolve path
         member_path = (dest / member.name).resolve()
-        if not str(member_path).startswith(str(dest)):
+
+        # Path traversal check (must be under dest)
+        try:
+            member_path.relative_to(dest)
+        except ValueError:
             raise ValueError(f"Path traversal detected: {member.name}")
+
+        # Absolute path check
+        if member.name.startswith("/"):
+            raise ValueError(f"Absolute paths not allowed: {member.name}")
+
         # Reject symlinks and other dangerous file types
         if member.issym() or member.islnk():
-            raise ValueError(f"Symbolic links not allowed: {member.name}")
-        if member.isdev() or member.ischr() or member.isblk():
-            raise ValueError(f"Device files not allowed: {member.name}")
-    # Extract all members (after validation)
-    tar.extractall(dest)
+            raise ValueError(f"Symbolic/hard links not allowed: {member.name}")
+
+        # Device file check
+        if member.isdev() or member.ischr() or member.isblk() or member.isfifo():
+            raise ValueError(f"Special files not allowed: {member.name}")
+
+        # Size check (100MB limit per file)
+        if member.size > 100 * 1024 * 1024:
+            raise ValueError(f"File too large: {member.name} ({member.size} bytes)")
+
+    # Phase 2: Extract individually to avoid TOCTOU
+    for member in tar.getmembers():
+        if member.isfile() or member.isdir():
+            # Use data filter if available (Python 3.12+)
+            if hasattr(tarfile, "data_filter"):
+                tar.extract(member, dest, filter="data")
+            else:
+                tar.extract(member, dest)
 
 
 def _rollback_import(backup_name: str | None, mgr: BackupManager) -> None:
@@ -642,9 +685,12 @@ def import_config(input_file: str) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
 
-            # Safely extract archive
-            with tarfile.open(input_path, "r:gz") as tar:
-                _safe_extract_tar(tar, tmpdir_path)
+            # Safely extract archive using security.py's safe_tar_extract
+            try:
+                safe_tar_extract(input_path, tmpdir_path, allow_symlinks=False)
+            except SecurityValidationError as e:
+                console.print(f"[red]Security check failed: {e}[/]")
+                raise SystemExit(1) from e
 
             # Find the extracted backup directory
             extracted_dirs = [d for d in tmpdir_path.iterdir() if d.is_dir()]
@@ -689,18 +735,39 @@ def import_config(input_file: str) -> None:
 @cli.command()
 @click.option("--check", is_flag=True, help="Only check for updates, don't apply.")
 def update(check: bool) -> None:
-    """Update configuration to the latest version.
+    """Check for OhMyClaude updates.
 
-    Checks for updates to OhMyClaude and applies new configurations
-    while preserving your customizations.
+    Checks PyPI for new versions and shows update instructions.
+
+    \b
+    Examples:
+        omc update              Check and show update instructions
+        omc update --check      Same as above (explicit check mode)
     """
-    if check:
-        console.print("[blue]Checking for updates...[/]")
-    else:
-        console.print("[blue]Updating configuration...[/]")
+    from ohmyclaude.core.version import check_version, get_update_command
 
-    # TODO: Implement update logic
-    console.print("\n[yellow]Update command not yet implemented.[/]")
+    console.print("[blue]Checking for updates...[/]\n")
+
+    result = check_version()
+
+    if result.error:
+        console.print(f"[yellow]Warning: {result.error}[/]")
+        return
+
+    console.print(f"  Current version: [cyan]{result.current}[/]")
+    console.print(f"  Latest version:  [cyan]{result.latest}[/]")
+    console.print()
+
+    if result.is_outdated:
+        console.print("[yellow]A new version is available![/]")
+        console.print()
+        console.print("[bold]To update, run:[/]")
+        console.print(f"  [cyan]{get_update_command()}[/]")
+        if result.release_url:
+            console.print()
+            console.print(f"[dim]Release notes: {result.release_url}[/]")
+    else:
+        console.print("[green]You are using the latest version.[/]")
 
 
 if __name__ == "__main__":

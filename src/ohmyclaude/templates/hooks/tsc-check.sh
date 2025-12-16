@@ -64,9 +64,9 @@ run_tsc_check() {
     local repo="$1"
     local repo_path="$CLAUDE_PROJECT_DIR/$repo"
     local cache_file="$CACHE_DIR/$repo-tsc-cmd.cache"
-    
+
     cd "$repo_path" 2>/dev/null || return 1
-    
+
     # Get or cache the TSC command for this repo
     local tsc_cmd
     if [ -f "$cache_file" ] && [ -z "$FORCE_DETECT" ]; then
@@ -75,8 +75,11 @@ run_tsc_check() {
         tsc_cmd=$(get_tsc_command "$repo_path")
         echo "$tsc_cmd" > "$cache_file"
     fi
-    
-    eval "$tsc_cmd" 2>&1
+
+    # Security: Execute command without eval to prevent command injection
+    # Convert command string to array for safe execution
+    read -ra cmd_array <<< "$tsc_cmd"
+    "${cmd_array[@]}" 2>&1
 }
 
 # Only process file modification tools
