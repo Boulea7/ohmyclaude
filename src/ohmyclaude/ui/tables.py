@@ -89,7 +89,10 @@ def create_preset_table() -> Table:
     return table
 
 
-def create_provider_table(providers: list[dict], current: str | None = None) -> Table:
+def create_provider_table(
+    providers: list[dict[str, Any]],
+    current: str | None = None,
+) -> Table:
     """Create a table showing available API providers.
 
     Args:
@@ -126,7 +129,7 @@ def create_provider_table(providers: list[dict], current: str | None = None) -> 
     return table
 
 
-def create_mcp_table(mcps: list[dict]) -> Table:
+def create_mcp_table(mcps: list[dict[str, Any]]) -> Table:
     """Create a table showing MCP server configuration.
 
     Args:
@@ -156,7 +159,7 @@ def create_mcp_table(mcps: list[dict]) -> Table:
     return table
 
 
-def create_health_table(checks: list[dict]) -> Table:
+def create_health_table(checks: list[dict[str, Any]]) -> Table:
     """Create a table showing health check results.
 
     Args:

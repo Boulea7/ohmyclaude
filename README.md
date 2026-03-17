@@ -39,7 +39,7 @@ pipx install ohmyclaude
 ### 从源码安装
 
 ```bash
-git clone https://github.com/your-repo/ohmyclaude.git
+git clone https://github.com/Boulea7/ohmyclaude.git
 cd ohmyclaude
 pip install -e .
 ```

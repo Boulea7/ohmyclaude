@@ -102,7 +102,7 @@ Trusted Publishing 允许 GitHub Actions 无需 API Token 即可发布到 PyPI�
 
 | 字段 | 值 |
 |------|-----|
-| **Owner** | `ohmyclaude` (GitHub 用户名或组织名) |
+| **Owner** | `Boulea7` (GitHub 用户名或组织名) |
 | **Repository name** | `ohmyclaude` |
 | **Workflow name** | `publish.yml` |
 | **Environment name** | `pypi` (**必填** - workflow 依赖此配置) |
@@ -113,7 +113,7 @@ Trusted Publishing 允许 GitHub Actions 无需 API Token 即可发布到 PyPI�
 
 > **重要**: 此步骤是必需的，因为 `publish.yml` 使用 `environment: pypi` 来触发 Trusted Publishing。
 
-1. 打开 GitHub 仓库: https://github.com/ohmyclaude/ohmyclaude
+1. 打开 GitHub 仓库: https://github.com/Boulea7/ohmyclaude
 2. 进入 **Settings** → **Environments**
 3. 点击 **"New environment"**
 4. 输入名称: `pypi` (必须与 workflow 中的 environment 名称一致)
@@ -195,7 +195,7 @@ git push origin v1.0.0
 
 ### 5.3 监控 GitHub Actions
 
-1. 访问 https://github.com/ohmyclaude/ohmyclaude/actions
+1. 访问 https://github.com/Boulea7/ohmyclaude/actions
 2. 查看 "Publish to PyPI" workflow 运行状态
 3. 等待所有 jobs 完成 (约 2-5 分钟)
 
@@ -235,12 +235,12 @@ ohmyclaude setup --help
 
 ```bash
 # 测试远程安装脚本
-curl -fsSL https://raw.githubusercontent.com/ohmyclaude/ohmyclaude/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Boulea7/ohmyclaude/main/install.sh | bash
 ```
 
 ### 6.4 检查 GitHub Release
 
-访问 https://github.com/ohmyclaude/ohmyclaude/releases 确认:
+访问 https://github.com/Boulea7/ohmyclaude/releases 确认:
 - Release v1.0.0 已创建
 - Release notes 自动生成
 - 构建产物已附加
@@ -325,9 +325,9 @@ CI 会自动完成后续发布流程。
 |------|-----|
 | PyPI 项目页 | https://pypi.org/project/ohmyclaude/ |
 | PyPI 管理页 | https://pypi.org/manage/project/ohmyclaude/ |
-| GitHub 仓库 | https://github.com/ohmyclaude/ohmyclaude |
-| GitHub Actions | https://github.com/ohmyclaude/ohmyclaude/actions |
-| GitHub Releases | https://github.com/ohmyclaude/ohmyclaude/releases |
+| GitHub 仓库 | https://github.com/Boulea7/ohmyclaude |
+| GitHub Actions | https://github.com/Boulea7/ohmyclaude/actions |
+| GitHub Releases | https://github.com/Boulea7/ohmyclaude/releases |
 
 ### 关键命令速查
 

@@ -30,19 +30,25 @@ def temp_home(tmp_path: Path) -> Generator[Path, None, None]:
     home = tmp_path / "home"
     home.mkdir()
 
-    with patch("ohmyclaude.core.paths.HOME", home):
-        # Also patch the derived paths
-        with patch("ohmyclaude.core.paths.CLAUDE_DIR", home / ".claude"):
-            with patch("ohmyclaude.core.paths.SETTINGS_FILE", home / ".claude" / "settings.json"):
-                with patch("ohmyclaude.core.paths.CLAUDE_MD_FILE", home / ".claude" / "CLAUDE.md"):
-                    with patch("ohmyclaude.core.paths.COMMANDS_DIR", home / ".claude" / "commands"):
-                        with patch("ohmyclaude.core.paths.HOOKS_DIR", home / ".claude" / "hooks"):
-                            with patch("ohmyclaude.core.paths.AGENTS_DIR", home / ".claude" / "agents"):
-                                with patch("ohmyclaude.core.paths.OHMYCLAUDE_DIR", home / ".ohmyclaude"):
-                                    with patch("ohmyclaude.core.paths.BACKUPS_DIR", home / ".ohmyclaude" / "backups"):
-                                        with patch("ohmyclaude.core.paths.CODEX_DIR", home / ".codex"):
-                                            with patch("ohmyclaude.core.paths.CODEX_AUTH_FILE", home / ".codex" / "auth.json"):
-                                                yield home
+    claude_dir = home / ".claude"
+    ohmyclaude_dir = home / ".ohmyclaude"
+    codex_dir = home / ".codex"
+
+    # Also patch the derived paths
+    with (
+        patch("ohmyclaude.core.paths.HOME", home),
+        patch("ohmyclaude.core.paths.CLAUDE_DIR", claude_dir),
+        patch("ohmyclaude.core.paths.SETTINGS_FILE", claude_dir / "settings.json"),
+        patch("ohmyclaude.core.paths.CLAUDE_MD_FILE", claude_dir / "CLAUDE.md"),
+        patch("ohmyclaude.core.paths.COMMANDS_DIR", claude_dir / "commands"),
+        patch("ohmyclaude.core.paths.HOOKS_DIR", claude_dir / "hooks"),
+        patch("ohmyclaude.core.paths.AGENTS_DIR", claude_dir / "agents"),
+        patch("ohmyclaude.core.paths.OHMYCLAUDE_DIR", ohmyclaude_dir),
+        patch("ohmyclaude.core.paths.BACKUPS_DIR", ohmyclaude_dir / "backups"),
+        patch("ohmyclaude.core.paths.CODEX_DIR", codex_dir),
+        patch("ohmyclaude.core.paths.CODEX_AUTH_FILE", codex_dir / "auth.json"),
+    ):
+        yield home
 
 
 @pytest.fixture

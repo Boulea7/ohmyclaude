@@ -176,12 +176,14 @@ class TestInstallerIntegration:
             model="sonnet",
         )
 
+        claude_md_file = temp_env["CLAUDE_MD_FILE"]
+
         with patch("ohmyclaude.core.installer.SETTINGS_FILE", temp_env["SETTINGS_FILE"]):
             with patch("ohmyclaude.core.installer.CLAUDE_DIR", temp_env["CLAUDE_DIR"]):
                 with patch("ohmyclaude.core.installer.COMMANDS_DIR", temp_env["COMMANDS_DIR"]):
                     with patch("ohmyclaude.core.installer.HOOKS_DIR", temp_env["HOOKS_DIR"]):
                         with patch("ohmyclaude.core.installer.AGENTS_DIR", temp_env["AGENTS_DIR"]):
-                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]):
+                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", claude_md_file):
                                 with patch("ohmyclaude.core.installer.ensure_claude_dirs"):
                                     installer = Installer(preset)
                                     installer._install_settings()
@@ -227,12 +229,14 @@ class TestInstallerIntegration:
             agents=[],
         )
 
+        claude_md_file = temp_env["CLAUDE_MD_FILE"]
+
         with patch("ohmyclaude.core.installer.SETTINGS_FILE", temp_env["SETTINGS_FILE"]):
             with patch("ohmyclaude.core.installer.CLAUDE_DIR", temp_env["CLAUDE_DIR"]):
                 with patch("ohmyclaude.core.installer.COMMANDS_DIR", temp_env["COMMANDS_DIR"]):
                     with patch("ohmyclaude.core.installer.HOOKS_DIR", temp_env["HOOKS_DIR"]):
                         with patch("ohmyclaude.core.installer.AGENTS_DIR", temp_env["AGENTS_DIR"]):
-                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]):
+                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", claude_md_file):
                                 with patch("ohmyclaude.core.installer.ensure_claude_dirs"):
                                     installer = Installer(preset)
                                     result = installer.install()
@@ -254,12 +258,14 @@ class TestInstallerIntegration:
             description="Test preset",
         )
 
+        claude_md_file = temp_env["CLAUDE_MD_FILE"]
+
         with patch("ohmyclaude.core.installer.SETTINGS_FILE", temp_env["SETTINGS_FILE"]):
             with patch("ohmyclaude.core.installer.CLAUDE_DIR", temp_env["CLAUDE_DIR"]):
                 with patch("ohmyclaude.core.installer.COMMANDS_DIR", temp_env["COMMANDS_DIR"]):
                     with patch("ohmyclaude.core.installer.HOOKS_DIR", temp_env["HOOKS_DIR"]):
                         with patch("ohmyclaude.core.installer.AGENTS_DIR", temp_env["AGENTS_DIR"]):
-                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]):
+                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", claude_md_file):
                                 with patch("ohmyclaude.core.installer.ensure_claude_dirs"):
                                     installer = Installer(preset)
                                     result = installer.install(skip_mcp=True)
@@ -291,12 +297,14 @@ class TestInstallerWithRealPresets:
         engine = ConfigEngine()
         preset = engine.load_preset("starter")
 
+        claude_md_file = temp_env["CLAUDE_MD_FILE"]
+
         with patch("ohmyclaude.core.installer.SETTINGS_FILE", temp_env["SETTINGS_FILE"]):
             with patch("ohmyclaude.core.installer.CLAUDE_DIR", temp_env["CLAUDE_DIR"]):
                 with patch("ohmyclaude.core.installer.COMMANDS_DIR", temp_env["COMMANDS_DIR"]):
                     with patch("ohmyclaude.core.installer.HOOKS_DIR", temp_env["HOOKS_DIR"]):
                         with patch("ohmyclaude.core.installer.AGENTS_DIR", temp_env["AGENTS_DIR"]):
-                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]):
+                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", claude_md_file):
                                 with patch("ohmyclaude.core.installer.ensure_claude_dirs"):
                                     installer = Installer(preset, engine)
                                     result = installer.install()
@@ -314,7 +322,8 @@ class TestInstallerWithRealPresets:
                 with patch("ohmyclaude.core.installer.COMMANDS_DIR", temp_env["COMMANDS_DIR"]):
                     with patch("ohmyclaude.core.installer.HOOKS_DIR", temp_env["HOOKS_DIR"]):
                         with patch("ohmyclaude.core.installer.AGENTS_DIR", temp_env["AGENTS_DIR"]):
-                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]):
+                            claude_md_file = temp_env["CLAUDE_MD_FILE"]
+                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", claude_md_file):
                                 with patch("ohmyclaude.core.installer.ensure_claude_dirs"):
                                     installer = Installer(preset, engine)
                                     result = installer.install()
@@ -323,7 +332,9 @@ class TestInstallerWithRealPresets:
 
                                     # Standard preset should have commands
                                     if preset.commands:
-                                        assert temp_env["COMMANDS_DIR"].exists() or result["summary"]["skipped_count"] > 0
+                                        commands_exist = temp_env["COMMANDS_DIR"].exists()
+                                        skipped = result["summary"]["skipped_count"] > 0
+                                        assert commands_exist or skipped
 
     def test_install_full_preset(self, temp_env):
         """Test installing full preset."""
@@ -335,7 +346,8 @@ class TestInstallerWithRealPresets:
                 with patch("ohmyclaude.core.installer.COMMANDS_DIR", temp_env["COMMANDS_DIR"]):
                     with patch("ohmyclaude.core.installer.HOOKS_DIR", temp_env["HOOKS_DIR"]):
                         with patch("ohmyclaude.core.installer.AGENTS_DIR", temp_env["AGENTS_DIR"]):
-                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]):
+                            claude_md_file = temp_env["CLAUDE_MD_FILE"]
+                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", claude_md_file):
                                 with patch("ohmyclaude.core.installer.ensure_claude_dirs"):
                                     installer = Installer(preset, engine)
                                     result = installer.install()

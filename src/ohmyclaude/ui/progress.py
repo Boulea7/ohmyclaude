@@ -4,6 +4,7 @@ Provides visual feedback during installation and configuration operations.
 """
 
 from collections.abc import Callable, Iterator
+from types import TracebackType
 from typing import TypeVar
 
 from rich.console import Console
@@ -109,9 +110,14 @@ class InstallationProgress:
         self._progress.__enter__()
         return self
 
-    def __exit__(self, *args) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
         if self._progress:
-            self._progress.__exit__(*args)
+            self._progress.__exit__(exc_type, exc, tb)
 
     def add_step(self, description: str, total: int) -> None:
         """Add a new step to track.

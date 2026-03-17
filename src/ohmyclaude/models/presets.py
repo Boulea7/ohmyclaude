@@ -3,7 +3,7 @@
 This module defines the data models for preset packages (starter, standard, full).
 """
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -102,7 +102,7 @@ class PresetConfig(BaseModel):
         default="basic",
         description="Hooks preset name",
     )
-    hooks: dict[str, list[HookPreset | HookMatcherPreset | dict]] = Field(
+    hooks: dict[str, list[HookPreset | HookMatcherPreset | dict[str, Any]]] = Field(
         default_factory=dict,
         description="Detailed hooks configuration",
     )

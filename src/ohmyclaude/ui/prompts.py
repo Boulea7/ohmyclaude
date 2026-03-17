@@ -3,13 +3,14 @@
 Provides user-friendly interactive selection for configuration options.
 """
 
-from typing import Literal
+from typing import Any, Literal, cast
 
-from InquirerPy import inquirer
+from InquirerPy import inquirer as _inquirer
 from InquirerPy.base.control import Choice
 from rich.console import Console
 
 console = Console()
+inquirer = cast(Any, _inquirer)
 
 PresetType = Literal["starter", "standard", "full"]
 ClaudeMdTemplate = Literal["general", "frontend", "backend", "ml"]
@@ -21,7 +22,7 @@ def select_preset() -> PresetType:
     Returns:
         The selected preset name.
     """
-    result = inquirer.select(
+    result = cast(PresetType, inquirer.select(
         message="Select a preset package / 选择预设包:",
         choices=[
             Choice(
@@ -39,7 +40,7 @@ def select_preset() -> PresetType:
         ],
         default="standard",
         instruction="(Use arrow keys to navigate, Enter to select)",
-    ).execute()
+    ).execute())
 
     return result
 
@@ -50,7 +51,7 @@ def select_claude_md_template() -> ClaudeMdTemplate:
     Returns:
         The selected template name.
     """
-    result = inquirer.select(
+    result = cast(ClaudeMdTemplate, inquirer.select(
         message="Select CLAUDE.md template / 选择 CLAUDE.md 模板:",
         choices=[
             Choice(value="general", name="General - 通用开发者"),
@@ -59,7 +60,7 @@ def select_claude_md_template() -> ClaudeMdTemplate:
             Choice(value="ml", name="ML/RL - 机器学习研究者"),
         ],
         default="general",
-    ).execute()
+    ).execute())
 
     return result
 
@@ -75,15 +76,27 @@ def select_mcp_packages(current: list[str] | None = None) -> list[str]:
     """
     default_choices = current or ["basic"]
 
-    result = inquirer.checkbox(
+    result = cast(list[str], inquirer.checkbox(
         message="Select MCP packages / 选择 MCP 包:",
         choices=[
-            Choice(value="basic", name="Basic - filesystem + context7", enabled="basic" in default_choices),
-            Choice(value="web", name="Web - web-reader + web-search", enabled="web" in default_choices),
-            Choice(value="advanced", name="Advanced - unified-diff + zai-mcp-server", enabled="advanced" in default_choices),
+            Choice(
+                value="basic",
+                name="Basic - filesystem + context7",
+                enabled="basic" in default_choices,
+            ),
+            Choice(
+                value="web",
+                name="Web - web-reader + web-search",
+                enabled="web" in default_choices,
+            ),
+            Choice(
+                value="advanced",
+                name="Advanced - unified-diff + zai-mcp-server",
+                enabled="advanced" in default_choices,
+            ),
         ],
         instruction="(Space to select, Enter to confirm)",
-    ).execute()
+    ).execute())
 
     return result
 
@@ -99,16 +112,32 @@ def select_commands(current: list[str] | None = None) -> list[str]:
     """
     default_choices = current or ["commit", "review", "test"]
 
-    result = inquirer.checkbox(
+    result = cast(list[str], inquirer.checkbox(
         message="Select slash commands / 选择斜杠命令:",
         choices=[
-            Choice(value="commit", name="/commit - Smart Git commit", enabled="commit" in default_choices),
-            Choice(value="review", name="/review - Code review", enabled="review" in default_choices),
-            Choice(value="test", name="/test - Run tests", enabled="test" in default_choices),
-            Choice(value="codex", name="/codex - Delegate to Codex", enabled="codex" in default_choices),
+            Choice(
+                value="commit",
+                name="/commit - Smart Git commit",
+                enabled="commit" in default_choices,
+            ),
+            Choice(
+                value="review",
+                name="/review - Code review",
+                enabled="review" in default_choices,
+            ),
+            Choice(
+                value="test",
+                name="/test - Run tests",
+                enabled="test" in default_choices,
+            ),
+            Choice(
+                value="codex",
+                name="/codex - Delegate to Codex",
+                enabled="codex" in default_choices,
+            ),
         ],
         instruction="(Space to select, Enter to confirm)",
-    ).execute()
+    ).execute())
 
     return result
 
@@ -123,10 +152,10 @@ def confirm_action(message: str, default: bool = True) -> bool:
     Returns:
         True if user confirmed, False otherwise.
     """
-    result = inquirer.confirm(
+    result = cast(bool, inquirer.confirm(
         message=message,
         default=default,
-    ).execute()
+    ).execute())
 
     return result
 
@@ -142,17 +171,17 @@ def input_text(message: str, default: str = "", validate: bool = False) -> str:
     Returns:
         The user input string.
     """
-    result = inquirer.text(
+    result = cast(str, inquirer.text(
         message=message,
         default=default,
         validate=lambda x: len(x) > 0 if validate else True,
         invalid_message="Input cannot be empty.",
-    ).execute()
+    ).execute())
 
     return result
 
 
-def fuzzy_select_mcp(available: list[dict]) -> list[str]:
+def fuzzy_select_mcp(available: list[dict[str, Any]]) -> list[str]:
     """Fuzzy search and select MCP servers.
 
     Args:
@@ -166,16 +195,19 @@ def fuzzy_select_mcp(available: list[dict]) -> list[str]:
         return []
 
     choices = [
-        Choice(value=mcp["name"], name=f"{mcp['name']} - {mcp.get('description', '')}")
+        Choice(
+            value=cast(str, mcp["name"]),
+            name=f"{mcp['name']} - {mcp.get('description', '')}",
+        )
         for mcp in available
     ]
 
-    result = inquirer.fuzzy(
+    result = cast(list[str], inquirer.fuzzy(
         message="Search and select MCP servers / 搜索并选择 MCP 服务器:",
         choices=choices,
         multiselect=True,
         instruction="(Type to filter, Space to select, Enter to confirm)",
-    ).execute()
+    ).execute())
 
     return result
 
@@ -186,7 +218,7 @@ def select_provider() -> str:
     Returns:
         The selected provider name.
     """
-    result = inquirer.select(
+    result = cast(str, inquirer.select(
         message="Select API provider / 选择 API 供应商:",
         choices=[
             Choice(value="official", name="Official - Anthropic 官方 (需订阅)"),
@@ -196,7 +228,7 @@ def select_provider() -> str:
             Choice(value="custom", name="Custom - 自定义供应商"),
         ],
         default="official",
-    ).execute()
+    ).execute())
 
     return result
 

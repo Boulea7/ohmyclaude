@@ -79,24 +79,27 @@ class TestSetupCommand:
 
     def test_setup_with_preset_starter(self, runner, temp_env):
         """Test setup with starter preset."""
-        with patch("ohmyclaude.cli.main.SETTINGS_FILE", temp_env["SETTINGS_FILE"]):
-            with patch("ohmyclaude.cli.main.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]):
-                with patch("ohmyclaude.cli.main.COMMANDS_DIR", temp_env["COMMANDS_DIR"]):
-                    with patch("ohmyclaude.cli.main.HOOKS_DIR", temp_env["HOOKS_DIR"]):
-                        with patch("ohmyclaude.core.installer.SETTINGS_FILE", temp_env["SETTINGS_FILE"]):
-                            with patch("ohmyclaude.core.installer.CLAUDE_DIR", temp_env["CLAUDE_DIR"]):
-                                with patch("ohmyclaude.core.installer.COMMANDS_DIR", temp_env["COMMANDS_DIR"]):
-                                    with patch("ohmyclaude.core.installer.HOOKS_DIR", temp_env["HOOKS_DIR"]):
-                                        with patch("ohmyclaude.core.installer.AGENTS_DIR", temp_env["AGENTS_DIR"]):
-                                            with patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]):
-                                                with patch("ohmyclaude.core.installer.ensure_claude_dirs"):
-                                                    with patch("ohmyclaude.core.backup.SETTINGS_FILE", temp_env["SETTINGS_FILE"]):
-                                                        result = runner.invoke(cli, ["setup", "-p", "starter"])
+        with (
+            patch("ohmyclaude.cli.main.SETTINGS_FILE", temp_env["SETTINGS_FILE"]),
+            patch("ohmyclaude.cli.main.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]),
+            patch("ohmyclaude.cli.main.COMMANDS_DIR", temp_env["COMMANDS_DIR"]),
+            patch("ohmyclaude.cli.main.HOOKS_DIR", temp_env["HOOKS_DIR"]),
+            patch("ohmyclaude.core.installer.SETTINGS_FILE", temp_env["SETTINGS_FILE"]),
+            patch("ohmyclaude.core.installer.CLAUDE_DIR", temp_env["CLAUDE_DIR"]),
+            patch("ohmyclaude.core.installer.COMMANDS_DIR", temp_env["COMMANDS_DIR"]),
+            patch("ohmyclaude.core.installer.HOOKS_DIR", temp_env["HOOKS_DIR"]),
+            patch("ohmyclaude.core.installer.AGENTS_DIR", temp_env["AGENTS_DIR"]),
+            patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]),
+            patch("ohmyclaude.core.installer.ensure_claude_dirs"),
+            patch("ohmyclaude.core.backup.SETTINGS_FILE", temp_env["SETTINGS_FILE"]),
+        ):
+            result = runner.invoke(cli, ["setup", "-p", "starter"])
 
-                                                        # Should complete successfully
-                                                        assert result.exit_code == 0, f"Setup failed: {result.output}"
-                                                        # Note: "Errors" appears in table header, check for actual errors
-                                                        assert "Configuration complete" in result.output
+            # Should complete successfully
+            assert result.exit_code == 0, (f"Setup failed: {result.output}")
+
+            # "Errors" is a table header; check for actual failures instead.
+            assert "Configuration complete" in result.output
 
 
 class TestDoctorCommand:
@@ -147,7 +150,10 @@ class TestDoctorCommand:
                                 result = runner.invoke(cli, ["doctor"])
 
                                 assert result.exit_code == 0
-                                assert "Missing" in result.output or "Not configured" in result.output
+                                assert (
+                                    "Missing" in result.output
+                                    or "Not configured" in result.output
+                                )
 
     def test_doctor_with_config(self, runner, temp_env):
         """Test doctor when config exists."""
@@ -337,9 +343,10 @@ class TestUpdateCommand:
         assert result.exit_code == 0
         assert "--check" in result.output
 
-    def test_update_not_implemented(self, runner):
-        """Test update command shows not implemented."""
+    def test_update_shows_version_info(self, runner):
+        """Test update command shows version info."""
         result = runner.invoke(cli, ["update"])
 
         assert result.exit_code == 0
-        assert "not yet implemented" in result.output.lower()
+        # Should show checking message and version info (or network error)
+        assert "checking for updates" in result.output.lower()

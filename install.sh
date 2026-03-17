@@ -11,7 +11,7 @@
 #   4. Provides next steps guidance
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/ohmyclaude/ohmyclaude/main/install.sh | bash -s -- --yes
+#   curl -fsSL https://raw.githubusercontent.com/Boulea7/ohmyclaude/main/install.sh | bash -s -- --yes
 #   ./install.sh            # Interactive installation
 #   ./install.sh --yes      # Non-interactive (auto-yes to prompts)
 #   ./install.sh --help     # Show help message
@@ -240,10 +240,10 @@ Examples:
     ./install.sh --yes        # Non-interactive installation
 
     # Or install directly from GitHub:
-    curl -fsSL https://raw.githubusercontent.com/ohmyclaude/ohmyclaude/main/install.sh | bash
+    curl -fsSL https://raw.githubusercontent.com/Boulea7/ohmyclaude/main/install.sh | bash
 
 For more information:
-    https://github.com/ohmyclaude/ohmyclaude
+    https://github.com/Boulea7/ohmyclaude
 EOF
     exit 0
 }
@@ -292,7 +292,7 @@ main() {
     print_header "OhMyClaude Installation"
     echo ""
     print_info "Claude Code one-click configuration tool"
-    print_info "https://github.com/ohmyclaude/ohmyclaude"
+    print_info "https://github.com/Boulea7/ohmyclaude"
     echo ""
 
     if [ "$AUTO_YES" != true ]; then
@@ -339,7 +339,7 @@ main() {
     echo "  - full:      All features (~8,800 tokens)"
     echo ""
     print_info "Documentation:"
-    echo "  - GitHub: https://github.com/ohmyclaude/ohmyclaude"
+    echo "  - GitHub: https://github.com/Boulea7/ohmyclaude"
     echo "  - README: ohmyclaude --help"
     echo ""
     print_success "Happy coding with Claude Code!"

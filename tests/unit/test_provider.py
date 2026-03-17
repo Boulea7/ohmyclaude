@@ -10,6 +10,9 @@ import pytest
 from ohmyclaude.core.provider import ProviderSwitcher
 from ohmyclaude.models.provider import ProviderConfig
 
+# Test token that meets validation requirements (min 20 chars, alphanumeric with _.-)
+VALID_TEST_TOKEN = "test-token-valid-12345678901234567890"
+
 
 class TestProviderSwitcher:
     """Tests for ProviderSwitcher class."""
@@ -154,9 +157,10 @@ providers:
 
         with patch("ohmyclaude.core.provider.SETTINGS_FILE", settings_file):
             with patch("ohmyclaude.core.provider.PROVIDERS_FILE", tmp_path / "providers.yaml"):
-                with patch("ohmyclaude.core.provider.CODEX_AUTH_FILE", tmp_path / "codex" / "auth.json"):
+                codex_auth = tmp_path / "codex" / "auth.json"
+                with patch("ohmyclaude.core.provider.CODEX_AUTH_FILE", codex_auth):
                     switcher = ProviderSwitcher()
-                    result = switcher.switch("glm", token="test-token")
+                    result = switcher.switch("glm", token=VALID_TEST_TOKEN)
 
                     assert result.success is True
                     assert result.provider_name == "glm"
@@ -169,9 +173,10 @@ providers:
 
         with patch("ohmyclaude.core.provider.SETTINGS_FILE", settings_file):
             with patch("ohmyclaude.core.provider.PROVIDERS_FILE", tmp_path / "providers.yaml"):
-                with patch("ohmyclaude.core.provider.CODEX_AUTH_FILE", tmp_path / "codex" / "auth.json"):
+                codex_auth = tmp_path / "codex" / "auth.json"
+                with patch("ohmyclaude.core.provider.CODEX_AUTH_FILE", codex_auth):
                     switcher = ProviderSwitcher()
-                    switcher.switch("glm", token="test-token")
+                    switcher.switch("glm", token=VALID_TEST_TOKEN)
 
                     # Verify settings were updated
                     updated = json.loads(settings_file.read_text())
@@ -185,7 +190,8 @@ providers:
 
         with patch("ohmyclaude.core.provider.SETTINGS_FILE", settings_file):
             with patch("ohmyclaude.core.provider.PROVIDERS_FILE", tmp_path / "providers.yaml"):
-                with patch("ohmyclaude.core.provider.CODEX_AUTH_FILE", tmp_path / "codex" / "auth.json"):
+                codex_auth = tmp_path / "codex" / "auth.json"
+                with patch("ohmyclaude.core.provider.CODEX_AUTH_FILE", codex_auth):
                     switcher = ProviderSwitcher()
                     result = switcher.switch("official")
 
@@ -201,9 +207,10 @@ providers:
 
         with patch("ohmyclaude.core.provider.SETTINGS_FILE", settings_file):
             with patch("ohmyclaude.core.provider.PROVIDERS_FILE", tmp_path / "providers.yaml"):
-                with patch("ohmyclaude.core.provider.CODEX_AUTH_FILE", tmp_path / "codex" / "auth.json"):
+                codex_auth = tmp_path / "codex" / "auth.json"
+                with patch("ohmyclaude.core.provider.CODEX_AUTH_FILE", codex_auth):
                     switcher = ProviderSwitcher()
-                    result = switcher.switch("glm", token="test-token", skip_codex=True)
+                    result = switcher.switch("glm", token=VALID_TEST_TOKEN, skip_codex=True)
 
                     assert result.success is True
                     assert result.codex_updated is False
@@ -215,7 +222,8 @@ providers:
 
         with patch("ohmyclaude.core.provider.SETTINGS_FILE", settings_file):
             with patch("ohmyclaude.core.provider.PROVIDERS_FILE", tmp_path / "providers.yaml"):
-                with patch("ohmyclaude.core.provider.CODEX_AUTH_FILE", tmp_path / "codex" / "auth.json"):
+                codex_auth = tmp_path / "codex" / "auth.json"
+                with patch("ohmyclaude.core.provider.CODEX_AUTH_FILE", codex_auth):
                     with patch.dict(os.environ, {}, clear=True):
                         switcher = ProviderSwitcher()
                         result = switcher.switch("official")
