@@ -110,7 +110,7 @@ class PresetConfig(BaseModel):
     # Optional features
     include_codex: bool = Field(
         default=False,
-        description="Include CodexMCP integration",
+        description="Include Codex compatibility hints in generated templates",
     )
     skills: list[str] = Field(
         default_factory=list,

@@ -14,7 +14,7 @@ version: "1.0.0"
 model: sonnet
 always_thinking_enabled: true
 
-# CLAUDE.md template selection (includes SuperClaude patterns)
+# CLAUDE.md template selection (expanded planning + verification guidance)
 claude_md_template: standard
 
 # MCP packages to install
@@ -24,7 +24,7 @@ mcp_packages:
   - basic       # filesystem + context7 (FREE)
   - reasoning   # sequential-thinking (FREE)
   - code        # serena - semantic code understanding (FREE, requires Python/uvx)
-  - codex       # CodexMCP - Claude + Codex collaboration (FREE, requires Codex CLI)
+  - codex       # Codex compatibility bridge for Claude workflows (FREE, requires Codex CLI)
 
 # Optional paid packages (uncomment to enable)
 # mcp_packages_optional:
@@ -73,7 +73,7 @@ hooks:
           timeout: 2000
           description: Log file edits
 
-# CodexMCP integration
+# Codex compatibility hints in generated templates
 include_codex: false
 
 # Skills (optional, can be enabled manually)
@@ -92,8 +92,8 @@ estimated_resources:
 # Upgrade path
 upgrade_to: full
 upgrade_benefits:
-  - CodexMCP dual-AI collaboration
+  - Stronger Codex-aware reference material
   - Image and video analysis
   - Skill auto-activation system
   - Complete hook workflows
-  - Professional agents from showcase
+  - Richer agent and workflow templates

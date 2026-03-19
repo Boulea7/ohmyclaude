@@ -1,103 +1,91 @@
 # Dev Docs Templates / 开发文档模板
 
-The Dev Docs system is a three-file workflow for persistent task tracking across Claude Code sessions.
+The Dev Docs templates provide a **three-file task tracking workflow** for long-running Claude-assisted work.
 
-Dev Docs 系统是一个三文件工作流，用于跨 Claude Code 会话的持久任务跟踪。
+---
 
-## The Three-File System / 三文件系统
+## Purpose
 
-| File | Purpose | 用途 |
-|------|---------|------|
-| `[task]-plan.md` | Implementation strategy and phases | 实施策略和阶段 |
-| `[task]-context.md` | Key files, decisions, dependencies | 关键文件、决策、依赖 |
-| `[task]-tasks.md` | Checklist for tracking progress | 进度跟踪清单 |
+Use these templates when a task is large enough that you want durable written context across multiple sessions.
 
-## Why Three Files? / 为什么是三个文件？
+The pattern separates:
 
-1. **Prevents context loss**: Claude can "lose direction" in long tasks
-2. **Enables session resumption**: Continue seamlessly with "continue" command
-3. **Separates concerns**: Strategy vs. context vs. execution
+- strategy
+- implementation context
+- execution checklist
 
-1. **防止上下文丢失**：Claude 在长任务中可能"迷失方向"
-2. **支持会话恢复**：使用 "continue" 命令无缝继续
-3. **关注点分离**：策略 vs. 上下文 vs. 执行
+## Three-File Layout
 
-## Directory Structure / 目录结构
+| File | Purpose |
+|------|---------|
+| `[task]-plan.md` | 目标、方案、阶段拆分 |
+| `[task]-context.md` | 关键文件、依赖、决策、接口 |
+| `[task]-tasks.md` | 执行清单、状态、恢复入口 |
 
-```
+## Recommended Directory
+
+```text
 project/
 └── dev/
     └── active/
         └── [task-name]/
             ├── [task-name]-plan.md
             ├── [task-name]-context.md
-            ├── [task-name]-tasks.md
-            └── [task-name]-code-review.md (optional)
+            └── [task-name]-tasks.md
 ```
 
-## Templates / 模板
+## Why It Helps
 
-### plan-template.md.j2
+- 减少长任务中的上下文漂移
+- 让下一次会话更容易恢复
+- 把“方案”和“执行清单”分开，降低噪音
 
-Contains:
-- Executive summary
-- Current state analysis
-- Proposed solution
-- Implementation phases
-- Risk assessment
-- Success metrics
+## Relationship To Commands
 
-### context-template.md.j2
+OhMyClaude 仍然保留 `/dev-docs` 一类命令模板作为快捷入口。
 
-Contains:
-- Key files to modify/create/reference
-- Architecture context
-- Dependencies
-- Technical decisions
-- API contracts
-- Testing strategy
+但这里更重要的是 **workflow pattern 本身**：
 
-### tasks-template.md.j2
+- 你可以通过命令生成
+- 也可以手动创建
+- 这不是依赖某个单独命令才能成立的机制
 
-Contains:
-- Task checklist by phase
-- Priority categorization
-- Blocked tasks tracking
-- Completion log
-- Session resume guide
+## Template Contents
 
-## Usage / 使用
+### `plan-template.md.j2`
 
-### Creating Dev Docs / 创建开发文档
+适合记录：
 
-Use the `/dev-docs` command:
+- 目标摘要
+- 当前状态
+- 方案设计
+- 实施阶段
+- 风险与验证
 
-```
-/dev-docs implement user authentication
-```
+### `context-template.md.j2`
 
-This creates the three files in `dev/active/user-authentication/`.
+适合记录：
 
-### Resuming a Session / 恢复会话
+- 关键文件
+- 依赖关系
+- 技术决策
+- 接口与数据流
 
-Say:
+### `tasks-template.md.j2`
 
-```
-Continue working on [task-name]. Please read:
-- dev/active/[task-name]/[task-name]-plan.md
-- dev/active/[task-name]/[task-name]-context.md
-- dev/active/[task-name]/[task-name]-tasks.md
+适合记录：
 
-Then continue from where we left off.
-```
+- 分阶段 checklist
+- Blockers
+- 完成情况
+- 会话恢复提示
 
-## Benefits / 优势
+## Maintenance Notes
 
-- **40-60% token efficiency** through focused context
-- **Persistent state** across sessions
-- **Clear progress tracking**
-- **Better collaboration** between Claude and user
+This directory is a reusable documentation workflow pattern.
 
-## Based On / 基于
+It should not be described as:
 
-[claude-code-infrastructure-showcase](https://github.com/diet103/claude-code-infrastructure-showcase) - Reddit article "Claude Code is a Beast – Tips from 6 Months of Hardcore Use".
+- a guaranteed official Claude feature
+- a multi-harness standard
+- a substitute for current implementation docs such as `README.md`

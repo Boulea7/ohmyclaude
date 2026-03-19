@@ -1,6 +1,16 @@
 # Skill Activation Templates / 技能激活模板
 
-This directory contains templates for the Claude Code skill auto-activation system.
+Legacy duplicate templates for a Claude Code skill auto-activation workflow.
+历史遗留的重复模板，用于 Claude Code 技能自动激活工作流。
+
+> Note / 说明
+>
+> This directory is currently kept for reference only.
+> The active installer path uses `src/ohmyclaude/templates/hooks/` and
+> `src/ohmyclaude/templates/skills/skill-rules.json` instead.
+> 本目录当前仅作为参考保留；
+> 现行安装流程使用 `src/ohmyclaude/templates/hooks/` 与
+> `src/ohmyclaude/templates/skills/skill-rules.json`。
 
 ## Files / 文件
 
@@ -12,9 +22,21 @@ This directory contains templates for the Claude Code skill auto-activation syst
 
 ## Installation / 安装
 
-These files are automatically installed to `~/.claude/` when using OhMyClaude with skill activation enabled.
+These files are **not** the current authoritative install source.
 
-使用 OhMyClaude 启用技能激活时，这些文件会自动安装到 `~/.claude/`。
+这些文件**不是**当前权威安装来源。
+
+For live hook and rule wiring, inspect these current sources instead:
+
+- `src/ohmyclaude/templates/hooks/`
+- `src/ohmyclaude/templates/skills/skill-rules.json`
+- `templates/presets/full.yaml`
+
+如需查看现行 hook / rule 接线方式，请以这些路径为准：
+
+- `src/ohmyclaude/templates/hooks/`
+- `src/ohmyclaude/templates/skills/skill-rules.json`
+- `templates/presets/full.yaml`
 
 ## skill-rules.json
 
@@ -55,34 +77,17 @@ To customize skill rules for your project:
 2. 修改关键词和模式以适应你的领域
 3. 添加项目特定的文件触发器
 
-## Hook Configuration / 钩子配置
+## Historical Note / 历史说明
 
-Add to `settings.json`:
+Older examples in this directory may still reference `~/.claude/hooks/` or
+`ts-node`.
 
-```json
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "type": "command",
-        "command": "npx ts-node ~/.claude/hooks/skill-activation-prompt.ts",
-        "timeout": 5000
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/post-tool-use-tracker.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+These snippets are historical reference material only and should not be treated
+as the current OhMyClaude installer contract.
+
+本目录中的旧示例可能仍然会引用 `~/.claude/hooks/` 或 `ts-node`。
+
+这些片段仅用于历史参考，不应视为当前 OhMyClaude 安装流程的权威约定。
 
 ## Based On / 基于
 
