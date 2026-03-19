@@ -16,6 +16,7 @@ from ohmyclaude.core.paths import (
     COMMANDS_DIR,
     HOOKS_DIR,
     SETTINGS_FILE,
+    SKILLS_DIR,
     ensure_claude_dirs,
     get_project_templates_dir,
 )
@@ -125,6 +126,7 @@ class Installer:
         self._install_commands()
         self._install_hooks()
         self._install_agents()
+        self._install_skills()
 
         if not skip_mcp:
             self._install_mcp()
@@ -390,6 +392,51 @@ class Installer:
                 self.result.add_error(
                     item_type="agent",
                     name=agent_name,
+                    error=str(e),
+                )
+
+    def _install_skills(self) -> None:
+        """Install skill templates to ~/.claude/skills/."""
+        if not self.preset.skills:
+            return
+
+        skills_source = self.templates_dir / "skills"
+        if not skills_source.exists():
+            self.result.add_skipped(
+                item_type="skill",
+                name="skills",
+                reason=f"Skills templates directory not found: {skills_source}",
+            )
+            return
+
+        SKILLS_DIR.mkdir(parents=True, exist_ok=True)
+
+        for skill_name in self.preset.skills:
+            try:
+                safe_name = self._safe_segment(skill_name, "skill")
+                src_dir = skills_source / safe_name
+                if not src_dir.exists() or not src_dir.is_dir():
+                    self.result.add_skipped(
+                        item_type="skill",
+                        name=skill_name,
+                        reason="Template not found",
+                    )
+                    continue
+
+                dst_dir = SKILLS_DIR / safe_name
+                if dst_dir.exists():
+                    shutil.rmtree(dst_dir)
+
+                shutil.copytree(src_dir, dst_dir)
+                self.result.add_installed(
+                    item_type="skill",
+                    name=skill_name,
+                    path=str(dst_dir),
+                )
+            except Exception as e:
+                self.result.add_error(
+                    item_type="skill",
+                    name=skill_name,
                     error=str(e),
                 )
 

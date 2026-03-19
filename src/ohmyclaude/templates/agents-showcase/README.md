@@ -1,79 +1,72 @@
 # Agent Templates / 代理模板
 
-Specialized agent templates for common development tasks.
+These are **Claude-oriented markdown agent templates** bundled with OhMyClaude.
 
-专业代理模板，用于常见开发任务。
+---
 
-## Available Agents / 可用代理
+## What This Directory Is For
 
-| Agent | Purpose | 用途 | Model |
-|-------|---------|------|-------|
-| `code-architecture-reviewer` | Code review and architecture validation | 代码审查和架构验证 | sonnet |
-| `auto-error-resolver` | Build and runtime error resolution | 构建和运行时错误解决 | sonnet |
-| `plan-reviewer` | Implementation plan validation | 实施计划验证 | sonnet |
-| `documentation-architect` | Documentation creation | 文档创建 | haiku |
-| `web-research-specialist` | Information gathering and research | 信息收集和研究 | sonnet |
+This directory contains reusable subagent definitions for common development tasks.
 
-## Agent Structure / 代理结构
+They are intended to be:
 
-Each agent template follows this structure:
+- installed into `~/.claude/agents/` by supported presets
+- used as reference material for project-specific agent design
+- kept lightweight and easy to copy or adapt
+
+They are **not** a claim that OhMyClaude is a hosted multi-harness agent marketplace.
+
+## Included Templates
+
+| Agent | Purpose |
+|-------|---------|
+| `code-reviewer` | Code review and risk finding |
+| `debugger` | Systematic debugging |
+| `test-engineer` | Test design and automation |
+| `refactor-expert` | Focused refactoring help |
+| `doc-writer` | Technical documentation |
+| `code-architecture-reviewer` | Architecture review |
+| `auto-error-resolver` | Error triage and resolution |
+| `web-research-specialist` | Research and source gathering |
+| `documentation-architect` | Documentation structure design |
+| `plan-reviewer` | Plan validation |
+
+## Format
+
+Each template is a standalone markdown file with frontmatter.
 
 ```markdown
 ---
 name: agent-name
-description: |
-  Agent description in English and Chinese.
+description: Agent purpose
 model: sonnet|haiku|opus
 color: blue|red|green|purple|cyan
 ---
 
-[Agent instructions and capabilities]
+[agent instructions]
 ```
 
-## Usage / 使用
+## Usage Notes
 
-Agents are used via the Task tool:
+### Claude Code
 
-```python
-# In Claude Code
-Use the Task tool with subagent_type='code-architecture-reviewer' to review the changes.
-```
+These templates map naturally to Claude-style agent directories and markdown-based agent definitions.
 
-## Installation / 安装
+### Codex
 
-Agents are installed to `~/.claude/agents/` when using OhMyClaude with the full preset.
+For generated Codex bundles, OhMyClaude emits native `.codex/agents/*.toml` role files separately.
 
-使用 OhMyClaude 的 full 预设时，代理会安装到 `~/.claude/agents/`。
+Treat the markdown files in this directory as reference-style agent prompts, not as a drop-in Codex role format.
 
-## Creating Custom Agents / 创建自定义代理
+### Gemini CLI
 
-1. Create a new `.md` file in this directory
-2. Add the YAML frontmatter with required fields
-3. Write agent instructions (bilingual recommended)
-4. Install via OhMyClaude
+Gemini extension bundles can reuse markdown-based agent definitions in `agents/`, but feature parity is still evolving.
 
-1. 在此目录创建新的 `.md` 文件
-2. 添加包含必要字段的 YAML 前置元数据
-3. 编写代理指令（推荐双语）
-4. 通过 OhMyClaude 安装
+## Design Guidelines
 
-## Best Practices / 最佳实践
+When adding or revising a template:
 
-### Agent Design / 代理设计
-
-- **Single responsibility**: One agent, one job
-- **Clear output format**: Define expected output structure
-- **Bilingual support**: Include Chinese translations
-- **Model selection**: Use appropriate model for complexity
-
-### Agent Instructions / 代理指令
-
-- Be specific about capabilities
-- Include step-by-step processes
-- Define output formats
-- List common patterns and solutions
-- Provide clear guidelines
-
-## Based On / 基于
-
-[claude-code-infrastructure-showcase](https://github.com/diet103/claude-code-infrastructure-showcase) - Production-grade Claude Code agent patterns.
+- keep one agent focused on one job
+- define the expected output clearly
+- prefer concrete checklists over vague roleplay
+- avoid embedding repo-specific paths unless the template is intentionally project-specific

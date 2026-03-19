@@ -63,7 +63,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install --system ruff mypy
+          uv pip install --system -e ".[dev]"
 
       - name: Run ruff
         run: ruff check src/ tests/

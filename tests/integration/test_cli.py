@@ -7,6 +7,7 @@ import pytest
 from click.testing import CliRunner
 
 from ohmyclaude.cli.main import cli
+from ohmyclaude.models.provider import SwitchResult
 
 
 class TestCLIBasic:
@@ -64,6 +65,7 @@ class TestSetupCommand:
             "COMMANDS_DIR": claude_dir / "commands",
             "HOOKS_DIR": claude_dir / "hooks",
             "AGENTS_DIR": claude_dir / "agents",
+            "SKILLS_DIR": claude_dir / "skills",
             "CLAUDE_MD_FILE": claude_dir / "CLAUDE.md",
         }
 
@@ -84,11 +86,13 @@ class TestSetupCommand:
             patch("ohmyclaude.cli.main.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]),
             patch("ohmyclaude.cli.main.COMMANDS_DIR", temp_env["COMMANDS_DIR"]),
             patch("ohmyclaude.cli.main.HOOKS_DIR", temp_env["HOOKS_DIR"]),
+            patch("ohmyclaude.cli.main.SKILLS_DIR", temp_env["SKILLS_DIR"]),
             patch("ohmyclaude.core.installer.SETTINGS_FILE", temp_env["SETTINGS_FILE"]),
             patch("ohmyclaude.core.installer.CLAUDE_DIR", temp_env["CLAUDE_DIR"]),
             patch("ohmyclaude.core.installer.COMMANDS_DIR", temp_env["COMMANDS_DIR"]),
             patch("ohmyclaude.core.installer.HOOKS_DIR", temp_env["HOOKS_DIR"]),
             patch("ohmyclaude.core.installer.AGENTS_DIR", temp_env["AGENTS_DIR"]),
+            patch("ohmyclaude.core.installer.SKILLS_DIR", temp_env["SKILLS_DIR"]),
             patch("ohmyclaude.core.installer.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]),
             patch("ohmyclaude.core.installer.ensure_claude_dirs"),
             patch("ohmyclaude.core.backup.SETTINGS_FILE", temp_env["SETTINGS_FILE"]),
@@ -121,6 +125,7 @@ class TestDoctorCommand:
             "SETTINGS_FILE": claude_dir / "settings.json",
             "COMMANDS_DIR": claude_dir / "commands",
             "HOOKS_DIR": claude_dir / "hooks",
+            "SKILLS_DIR": claude_dir / "skills",
             "CLAUDE_MD_FILE": claude_dir / "CLAUDE.md",
         }
 
@@ -137,23 +142,23 @@ class TestDoctorCommand:
             with patch("ohmyclaude.cli.main.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]):
                 with patch("ohmyclaude.cli.main.COMMANDS_DIR", temp_env["COMMANDS_DIR"]):
                     with patch("ohmyclaude.cli.main.HOOKS_DIR", temp_env["HOOKS_DIR"]):
-                        # Mock ShellIntegration
-                        with patch("ohmyclaude.cli.main.ShellIntegration") as mock_shell:
-                            mock_shell.return_value.is_installed.return_value = False
-                            mock_shell.return_value.shell = "zsh"
-                            mock_shell.return_value.rc_path = Path("~/.zshrc")
+                        with patch("ohmyclaude.cli.main.SKILLS_DIR", temp_env["SKILLS_DIR"]):
+                            with patch("ohmyclaude.cli.main.ShellIntegration") as mock_shell:
+                                mock_shell.return_value.is_installed.return_value = False
+                                mock_shell.return_value.shell = "zsh"
+                                mock_shell.return_value.rc_path = Path("~/.zshrc")
 
-                            # Mock BackupManager
-                            with patch("ohmyclaude.cli.main.BackupManager") as mock_backup:
-                                mock_backup.return_value.list_backups.return_value = []
+                                # Mock BackupManager
+                                with patch("ohmyclaude.cli.main.BackupManager") as mock_backup:
+                                    mock_backup.return_value.list_backups.return_value = []
 
-                                result = runner.invoke(cli, ["doctor"])
+                                    result = runner.invoke(cli, ["doctor"])
 
-                                assert result.exit_code == 0
-                                assert (
-                                    "Missing" in result.output
-                                    or "Not configured" in result.output
-                                )
+                                    assert result.exit_code == 0
+                                    assert (
+                                        "Missing" in result.output
+                                        or "Not configured" in result.output
+                                    )
 
     def test_doctor_with_config(self, runner, temp_env):
         """Test doctor when config exists."""
@@ -167,18 +172,19 @@ class TestDoctorCommand:
             with patch("ohmyclaude.cli.main.CLAUDE_MD_FILE", temp_env["CLAUDE_MD_FILE"]):
                 with patch("ohmyclaude.cli.main.COMMANDS_DIR", temp_env["COMMANDS_DIR"]):
                     with patch("ohmyclaude.cli.main.HOOKS_DIR", temp_env["HOOKS_DIR"]):
-                        with patch("ohmyclaude.cli.main.ShellIntegration") as mock_shell:
-                            mock_shell.return_value.is_installed.return_value = True
-                            mock_shell.return_value.shell = "zsh"
-                            mock_shell.return_value.rc_path = Path("~/.zshrc")
+                        with patch("ohmyclaude.cli.main.SKILLS_DIR", temp_env["SKILLS_DIR"]):
+                            with patch("ohmyclaude.cli.main.ShellIntegration") as mock_shell:
+                                mock_shell.return_value.is_installed.return_value = True
+                                mock_shell.return_value.shell = "zsh"
+                                mock_shell.return_value.rc_path = Path("~/.zshrc")
 
-                            with patch("ohmyclaude.cli.main.BackupManager") as mock_backup:
-                                mock_backup.return_value.list_backups.return_value = []
+                                with patch("ohmyclaude.cli.main.BackupManager") as mock_backup:
+                                    mock_backup.return_value.list_backups.return_value = []
 
-                                result = runner.invoke(cli, ["doctor"])
+                                    result = runner.invoke(cli, ["doctor"])
 
-                                assert result.exit_code == 0
-                                assert "OK" in result.output
+                                    assert result.exit_code == 0
+                                    assert "OK" in result.output
 
 
 class TestSwitchCommand:
@@ -209,6 +215,32 @@ class TestSwitchCommand:
                 assert result.exit_code == 0
                 # Should show provider names
                 assert "official" in result.output.lower() or "glm" in result.output.lower()
+
+    def test_switch_defaults_to_not_touch_codex(self, runner):
+        """Switch should skip Codex auth updates unless explicitly requested."""
+        with patch("ohmyclaude.core.provider.ProviderSwitcher.switch") as mock_switch:
+            mock_switch.return_value = SwitchResult(success=True, provider_name="official")
+
+            result = runner.invoke(cli, ["switch", "official"])
+
+            assert result.exit_code == 0
+            assert mock_switch.call_args.kwargs["skip_codex"] is True
+            assert "not touched" in result.output.lower()
+
+    def test_switch_can_opt_in_to_codex_sync(self, runner):
+        """Switch should pass skip_codex=False only with explicit opt-in."""
+        with patch("ohmyclaude.core.provider.ProviderSwitcher.switch") as mock_switch:
+            mock_switch.return_value = SwitchResult(
+                success=True,
+                provider_name="glm",
+                codex_updated=True,
+            )
+
+            result = runner.invoke(cli, ["switch", "glm", "--sync-codex-auth"])
+
+            assert result.exit_code == 0
+            assert mock_switch.call_args.kwargs["skip_codex"] is False
+            assert "codex auth.json updated" in result.output.lower()
 
 
 class TestProviderCommand:
@@ -326,6 +358,115 @@ class TestExportImportCommands:
 
             assert result.exit_code == 1
             assert "No configuration found" in result.output
+
+
+class TestTargetBundles:
+    """Tests for explicit render/install target commands."""
+
+    @pytest.fixture
+    def runner(self):
+        """Create a Click test runner."""
+        return CliRunner()
+
+    def test_render_codex_project_bundle(self, runner, tmp_path: Path):
+        """Render should write Codex project assets into the chosen directory."""
+        output_dir = tmp_path / "codex-project"
+
+        result = runner.invoke(
+            cli,
+            [
+                "render",
+                "--target",
+                "codex-project",
+                "--preset",
+                "standard",
+                "--output",
+                str(output_dir),
+            ],
+        )
+
+        assert result.exit_code == 0, result.output
+        assert (output_dir / "AGENTS.md").exists()
+        assert (output_dir / ".codex" / "config.toml").exists()
+        assert (output_dir / ".agents" / "skills").exists()
+
+    def test_install_requires_confirm(self, runner, tmp_path: Path):
+        """Install should refuse explicit writes without the confirmation flag."""
+        dest_dir = tmp_path / "gemini-extension"
+
+        result = runner.invoke(
+            cli,
+            ["install", "--target", "gemini-extension", "--dest", str(dest_dir)],
+        )
+
+        assert result.exit_code == 1
+        assert "--confirm" in result.output
+
+    def test_install_gemini_extension_bundle(self, runner, tmp_path: Path):
+        """Install should write a Gemini extension bundle into an explicit destination."""
+        dest_dir = tmp_path / "gemini-extension"
+
+        result = runner.invoke(
+            cli,
+            [
+                "install",
+                "--target",
+                "gemini-extension",
+                "--preset",
+                "starter",
+                "--dest",
+                str(dest_dir),
+                "--confirm",
+                "--backup",
+            ],
+        )
+
+        assert result.exit_code == 0, result.output
+        assert (dest_dir / "gemini-extension.json").exists()
+        assert (dest_dir / "GEMINI.md").exists()
+        assert (dest_dir / "commands").exists()
+
+    def test_render_refuses_real_home_target(self, runner, tmp_path: Path):
+        """Render should refuse writes into real harness home directories."""
+        real_home = tmp_path / "home"
+        real_home.mkdir()
+
+        with patch("ohmyclaude.cli.main.Path.home", return_value=real_home):
+            result = runner.invoke(
+                cli,
+                [
+                    "render",
+                    "--target",
+                    "claude-home",
+                    "--preset",
+                    "starter",
+                    "--output",
+                    str(real_home / ".claude"),
+                ],
+            )
+
+        assert result.exit_code == 1
+        assert "real harness home" in result.output.lower()
+
+    def test_doctor_codex_project_target(self, runner, tmp_path: Path):
+        """Doctor should inspect project-scoped Codex assets at an explicit path."""
+        (tmp_path / "AGENTS.md").write_text("# Test AGENTS\n", encoding="utf-8")
+        (tmp_path / ".codex" / "agents").mkdir(parents=True)
+        (tmp_path / ".codex" / "config.toml").write_text("approval_policy = \"on-request\"\n")
+        (tmp_path / ".agents" / "skills" / "search-first").mkdir(parents=True)
+        (tmp_path / ".agents" / "skills" / "search-first" / "SKILL.md").write_text(
+            "---\nname: search-first\ndescription: test\n---\n",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(
+            cli,
+            ["doctor", "--target", "codex-project", "--path", str(tmp_path)],
+        )
+
+        assert result.exit_code == 0, result.output
+        assert "codex-project: AGENTS.md" in result.output
+        assert "OK" in result.output
 
 
 class TestUpdateCommand:

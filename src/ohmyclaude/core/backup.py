@@ -12,10 +12,14 @@ from typing import Any
 
 from ohmyclaude.core.atomic import atomic_write
 from ohmyclaude.core.paths import (
+    AGENTS_DIR,
     BACKUPS_DIR,
     CLAUDE_DIR,
+    CLAUDE_MD_FILE,
     COMMANDS_DIR,
+    HOOKS_DIR,
     SETTINGS_FILE,
+    SKILLS_DIR,
     ensure_ohmyclaude_dirs,
 )
 
@@ -126,14 +130,21 @@ class BackupManager:
             shutil.copy2(SETTINGS_FILE, backup_path / "settings.json")
 
         # Backup CLAUDE.md (user-level)
-        claude_md = CLAUDE_DIR / "CLAUDE.md"
-        if claude_md.exists():
-            shutil.copy2(claude_md, backup_path / "CLAUDE.md")
+        if CLAUDE_MD_FILE.exists():
+            shutil.copy2(CLAUDE_MD_FILE, backup_path / "CLAUDE.md")
 
-        # Backup commands directory
-        if COMMANDS_DIR.exists() and any(COMMANDS_DIR.iterdir()):
-            commands_backup = backup_path / "commands"
-            shutil.copytree(COMMANDS_DIR, commands_backup, dirs_exist_ok=True)
+        for source_dir, backup_name in (
+            (COMMANDS_DIR, "commands"),
+            (HOOKS_DIR, "hooks"),
+            (AGENTS_DIR, "agents"),
+            (SKILLS_DIR, "skills"),
+        ):
+            if source_dir.exists() and any(source_dir.iterdir()):
+                shutil.copytree(
+                    source_dir,
+                    backup_path / backup_name,
+                    dirs_exist_ok=True,
+                )
 
         # Create metadata
         files = [
@@ -219,14 +230,20 @@ class BackupManager:
         # Restore CLAUDE.md
         backup_claude_md = backup_path / "CLAUDE.md"
         if backup_claude_md.exists():
-            shutil.copy2(backup_claude_md, CLAUDE_DIR / "CLAUDE.md")
+            CLAUDE_DIR.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(backup_claude_md, CLAUDE_MD_FILE)
 
-        # Restore commands - remove existing to ensure clean state
-        backup_commands = backup_path / "commands"
-        if backup_commands.exists():
-            if COMMANDS_DIR.exists():
-                shutil.rmtree(COMMANDS_DIR)
-            shutil.copytree(backup_commands, COMMANDS_DIR)
+        for backup_name, target_dir in (
+            ("commands", COMMANDS_DIR),
+            ("hooks", HOOKS_DIR),
+            ("agents", AGENTS_DIR),
+            ("skills", SKILLS_DIR),
+        ):
+            backup_dir = backup_path / backup_name
+            if backup_dir.exists():
+                if target_dir.exists():
+                    shutil.rmtree(target_dir)
+                shutil.copytree(backup_dir, target_dir)
 
         return True
 
