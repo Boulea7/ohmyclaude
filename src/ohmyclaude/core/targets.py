@@ -288,9 +288,26 @@ class HarnessBundleBuilder:
         written_files: list[Path],
     ) -> None:
         """Best-effort rollback for a failed installation."""
+        try:
+            resolved_root = root.resolve()
+        except OSError:
+            # If we cannot resolve the root, avoid attempting rollback operations.
+            return
+
         for path in written_files:
-            if path not in existing_files and path.exists():
-                path.unlink()
+            if path in existing_files or not path.exists():
+                continue
+            try:
+                resolved_path = path.resolve()
+            except OSError:
+                # Skip paths that cannot be resolved safely.
+                continue
+            try:
+                resolved_path.relative_to(resolved_root)
+            except ValueError:
+                # Do not delete files outside the destination root.
+                continue
+            path.unlink()
 
         if backup_root is None or not backup_root.exists():
             return
@@ -300,6 +317,16 @@ class HarnessBundleBuilder:
                 continue
             relative = backup_file.relative_to(backup_root)
             restore_path = root / relative
+            try:
+                resolved_restore = restore_path.resolve()
+            except OSError:
+                # Skip restore targets that cannot be resolved safely.
+                continue
+            try:
+                resolved_restore.relative_to(resolved_root)
+            except ValueError:
+                # Do not restore files outside the destination root.
+                continue
             restore_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(backup_file, restore_path)
 
@@ -320,15 +347,31 @@ class HarnessBundleBuilder:
         except json.JSONDecodeError:
             return set()
 
+        # Manifest is expected to be a JSON object with a "files" list.
+        if not isinstance(data, dict):
+            return set()
+
         files = data.get("files", [])
         if not isinstance(files, list):
             return set()
 
-        return {
-            value
-            for value in files
-            if isinstance(value, str) and value and not value.startswith("../")
-        }
+        safe_files: set[str] = set()
+        for value in files:
+            if not isinstance(value, str) or not value:
+                continue
+            # Reject explicit parent-directory escapes.
+            if value.startswith("../"):
+                continue
+            path_value = Path(value)
+            # Reject absolute paths and drive-letter paths (e.g., "C:\\..." or "C:foo").
+            if path_value.is_absolute() or path_value.drive:
+                continue
+            # Reject any path containing ".." segments, not just a leading "../".
+            if ".." in path_value.parts:
+                continue
+            safe_files.add(value)
+
+        return safe_files
 
     def _prune_empty_parents(self, directory: Path, root: Path) -> None:
         """Remove empty parent directories after deleting stale files."""
