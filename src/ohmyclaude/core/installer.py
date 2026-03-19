@@ -22,6 +22,12 @@ from ohmyclaude.core.paths import (
 )
 from ohmyclaude.models.presets import PresetConfig
 
+_SKILL_SUPPORT_FILES: dict[str, tuple[str, ...]] = {
+    "basic": (),
+    "standard": (),
+    "full": ("skill-rules.json",),
+}
+
 
 class InstallResult:
     """Result of an installation operation."""
@@ -397,7 +403,8 @@ class Installer:
 
     def _install_skills(self) -> None:
         """Install skill templates to ~/.claude/skills/."""
-        if not self.preset.skills:
+        support_files = _SKILL_SUPPORT_FILES.get(self.preset.hooks_preset, ())
+        if not self.preset.skills and not support_files:
             return
 
         skills_source = self.templates_dir / "skills"
@@ -425,7 +432,12 @@ class Installer:
 
                 dst_dir = SKILLS_DIR / safe_name
                 if dst_dir.exists():
-                    shutil.rmtree(dst_dir)
+                    self.result.add_skipped(
+                        item_type="skill",
+                        name=skill_name,
+                        reason="Existing skill directory preserved",
+                    )
+                    continue
 
                 shutil.copytree(src_dir, dst_dir)
                 self.result.add_installed(
@@ -437,6 +449,38 @@ class Installer:
                 self.result.add_error(
                     item_type="skill",
                     name=skill_name,
+                    error=str(e),
+                )
+
+        for file_name in support_files:
+            try:
+                src_file = skills_source / file_name
+                if not src_file.exists() or not src_file.is_file():
+                    self.result.add_skipped(
+                        item_type="skill",
+                        name=file_name,
+                        reason="Support file not found",
+                    )
+                    continue
+
+                dst_file = SKILLS_DIR / file_name
+                if dst_file.exists():
+                    self.result.add_skipped(
+                        item_type="skill",
+                        name=file_name,
+                        reason="Existing support file preserved",
+                    )
+                    continue
+                shutil.copy2(src_file, dst_file)
+                self.result.add_installed(
+                    item_type="skill",
+                    name=file_name,
+                    path=str(dst_file),
+                )
+            except Exception as e:
+                self.result.add_error(
+                    item_type="skill",
+                    name=file_name,
                     error=str(e),
                 )
 

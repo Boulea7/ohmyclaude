@@ -38,7 +38,8 @@ OhMyClaude 想做的是中间地带：
 |------|--------------|
 | Claude setup | 生成 `~/.claude/settings.json`、`~/.claude/CLAUDE.md`、commands、hooks、agents、skills |
 | Multi-harness bundles | 可显式渲染或安装 `.claude-plugin/`、`.codex/`、`.agents/skills/`、Gemini extension bundle |
-| Workflow assets | 安装 `7` 个 commands、`10` 个 agents、`12` 个 skills、`8` 个 hook 脚本模板 |
+| Workflow assets | 安装 `9` 个 commands、`11` 个 agents、`16` 个 skills、`8` 个 hook 脚本模板 |
+| Curated phase 2 | 新增 `coding-standards`、`tdd-workflow`、`e2e-testing`、`worktree-isolation` 与独立的 `security-reviewer` |
 | MCP bundles | 通过 `templates/mcp/mcp_packages.yaml` 组合 MCP 包和 bundle |
 | Provider switching | 切换官方 / 第三方 / 自定义 provider，并把 Codex auth 同步改成显式 opt-in |
 | Shell integration | 通过 `omc init` 注入或移除 shell 初始化块 |
@@ -100,6 +101,7 @@ OhMyClaude 里提到的 Codex 有两层，必须区分：
 - 不直接对真实 `~/.claude`、`~/.codex`、Gemini 目录做手工 smoke test
 - 优先用 `omc render` 和显式 `omc install --dest ... --confirm` 在临时目录里验收
 - `omc render` 默认会拒绝写入真实 harness home 目录
+- `setup` 现在会保留已存在的同名 skills 和 `skill-rules.json`，不会静默覆盖用户自定义内容
 
 ## Installation
 
@@ -166,12 +168,14 @@ omc switch glm
 | Preset | Positioning | Current Shape |
 |--------|-------------|---------------|
 | `starter` | 最小可用配置 | `basic` MCP、3 个 commands、2 个 agents、无 skill 安装 |
-| `standard` | 日常开发推荐 | `basic + reasoning + code + codex`、4 个 commands、5 个 agents、inline hooks |
-| `full` | 最完整的 Claude 资产集 | 7 个基础 MCP 组、3 个 optional MCP 组、7 个 commands、10 个 agents、12 个 skills、8 个 hook 脚本 |
+| `standard` | 日常开发推荐 | `basic + reasoning + code + codex`、5 个 commands、6 个 agents、2 个精选 skills、inline hooks |
+| `full` | 最完整的 Claude 资产集 | 7 个基础 MCP 组、3 个 optional MCP 组、9 个 commands、11 个 agents、16 个 skills、8 个 hook 脚本 |
 
 补充说明：
 
 - 这张表描述的是默认 `claude-home` 输出面
+- `standard` 现在默认带一组轻量精选资产：`coding-standards`、`tdd-workflow`、`/tdd` 和 `security-reviewer`
+- `full` 进一步加入浏览器测试与隔离工作流资产，例如 `e2e-testing`、`worktree-isolation` 与 `/worktree`
 - `standard` 和 `full` 里的 `codex` 仍然是 **Claude 侧 bridge**
 - 它不等于原生 Codex 安装能力
 - 公开文案已经改用更现代的 Claude / Codex 术语，但运行行为仍以当前代码实现为准
@@ -191,7 +195,7 @@ omc switch glm
 指定 bundle 根目录；否则 CLI 会回退到 `cwd` 或 `~/.claude` 做检查。
 
 当前 plugin / Gemini 的 portable hooks 是一组“可移植子集”：
-它们会避免 home 目录假设，但暂时不会与 `full` 预设在 Claude home 下的 hook 行为完全一一对应。
+它们已经去掉了对 `OHMYCLAUDE_ROOT` 的直接依赖，并会优先解析 bundle-local 资源；但仍保留部分 Claude 导向的 fallback，暂时也不会与 `full` 预设在 Claude home 下的 hook 行为完全一一对应。
 
 ## Repository Layout
 
@@ -225,6 +229,8 @@ tests/
 - `README.zh-CN.md`
 - `README.zh-TW.md`
 - `README.ja.md`
+- `docs/`
+- 已跟踪的维护文档，例如 `AGENTS.md`、`CLAUDE.md`
 - `src/`
 - `templates/`
 - `tests/`
@@ -235,12 +241,10 @@ tests/
 本地私有资料应放在被忽略的路径中，例如：
 
 - `.ai-notes/`
-- `docs/`
-- 本地未跟踪的根级 AI 文件，例如 `AGENTS.md`、`CLAUDE.md`、`GEMINI.md`
+- 机器相关的临时索引、scratch 文件
+- 任何不适合进入 Git 历史的 AI 工作笔记
 
-这样可以避免研究报告、变更追踪、AI 专用索引文件进入公开 Git 历史。
-
-当前清理策略下，这些根级 AI 文件会继续保留在本地，但从 Git 跟踪中移除。
+这样可以把真正私有的工作上下文留在忽略路径里，同时允许仓库把经过整理的公开维护文档保留在版本控制中。
 
 ## 常见问题
 
@@ -281,7 +285,8 @@ pytest
 当前更现实的下一阶段是：
 
 - 继续增强 Claude plugin 和 Gemini extension 的 target-specific 验证
-- 在不让默认预设膨胀过快的前提下扩充共享 skill / agent 资产
+- 在不把 CLI 做成重运行时框架的前提下，补一层轻量 install-state 与 troubleshooting 支撑
+- 继续扩充精选共享 skill / agent 资产，同时控制默认预设的膨胀速度
 - 补齐更多 target-aware 的 doctor 检查和 troubleshooting 文档
 - 在保持 local-safe 前提下继续扩展多 harness 支持
 

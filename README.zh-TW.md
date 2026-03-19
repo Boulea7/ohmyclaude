@@ -38,7 +38,8 @@ OhMyClaude 的目標是中間地帶：
 |------|--------------|
 | Claude setup | 產生 `~/.claude/settings.json`、`~/.claude/CLAUDE.md`、commands、hooks、agents、skills |
 | Multi-harness bundles | 可顯式渲染或安裝 `.claude-plugin/`、`.codex/`、`.agents/skills/`、Gemini extension bundle |
-| Workflow assets | 安裝 `7` 個 commands、`10` 個 agents、`12` 個 skills、`8` 個 hook script 模板 |
+| Workflow assets | 安裝 `9` 個 commands、`11` 個 agents、`16` 個 skills、`8` 個 hook script 模板 |
+| Curated phase 2 | 新增 `coding-standards`、`tdd-workflow`、`e2e-testing`、`worktree-isolation` 與專門的 `security-reviewer` |
 | MCP bundles | 透過 `templates/mcp/mcp_packages.yaml` 組合 MCP 套件群組 |
 | Provider switching | 切換官方 / 第三方 / 自訂 provider，並把 Codex auth 同步改成顯式 opt-in |
 | Shell integration | 透過 `omc init` 注入或移除 shell 初始化區塊 |
@@ -100,6 +101,7 @@ preset 中的 `codex` MCP 套件表示 **Claude 工作流中的 Codex bridge 路
 - 不直接對真實 `~/.claude`、`~/.codex`、Gemini 目錄做手動 smoke test
 - 優先用 `omc render` 與顯式 `omc install --dest ... --confirm` 在暫存目錄裡驗收
 - `omc render` 預設會拒絕寫入真實 harness home 目錄
+- `setup` 現在會保留已存在的同名 skills 與 `skill-rules.json`，避免靜默覆寫使用者自訂內容
 
 ## Installation
 
@@ -166,12 +168,14 @@ omc switch glm
 | Preset | Positioning | Current Shape |
 |--------|-------------|---------------|
 | `starter` | 最小可用配置 | `basic` MCP、3 個 commands、2 個 agents、無 skill 安裝 |
-| `standard` | 日常開發推薦 | `basic + reasoning + code + codex`、4 個 commands、5 個 agents、inline hooks |
-| `full` | 最完整的 Claude 資產集 | 7 個基礎 MCP 群組、3 個 optional MCP 群組、7 個 commands、10 個 agents、12 個 skills、8 個 hook scripts |
+| `standard` | 日常開發推薦 | `basic + reasoning + code + codex`、5 個 commands、6 個 agents、2 個精選 skills、inline hooks |
+| `full` | 最完整的 Claude 資產集 | 7 個基礎 MCP 群組、3 個 optional MCP 群組、9 個 commands、11 個 agents、16 個 skills、8 個 hook scripts |
 
 補充說明：
 
 - 這張表描述的是預設 `claude-home` 輸出面
+- `standard` 現在預設帶一組輕量精選資產：`coding-standards`、`tdd-workflow`、`/tdd` 與 `security-reviewer`
+- `full` 進一步加入瀏覽器測試與隔離工作流資產，例如 `e2e-testing`、`worktree-isolation` 與 `/worktree`
 - `standard` 和 `full` 裡的 `codex` 仍然是 **Claude 側 bridge**
 - 它不等於原生 Codex 安裝能力
 - 公開文案已改用較新的 Claude / Codex 術語，但實際行為仍以目前程式碼為準
@@ -191,8 +195,8 @@ omc switch glm
 
 目前 plugin / Gemini 的 portable hooks 是一組「可攜子集」：
 
-- 它們會避免依賴 home 目錄假設
-- 但暫時不會與 `full` preset 在 Claude home 下的 hook 行為完全一一對應
+- 它們目前主要是移除了對 `OHMYCLAUDE_ROOT` 的直接耦合，並優先解析 bundle-local 資源
+- 仍保留部分 Claude 導向 fallback，也暫時不會與 `full` preset 在 Claude home 下的 hook 行為完全一一對應
 
 ## Repository Layout
 
@@ -226,6 +230,8 @@ tests/
 - `README.zh-CN.md`
 - `README.zh-TW.md`
 - `README.ja.md`
+- `docs/`
+- 已追蹤的維護文件，例如 `AGENTS.md`、`CLAUDE.md`
 - `src/`
 - `templates/`
 - `tests/`
@@ -236,12 +242,10 @@ tests/
 本地私有資料應放在被忽略的路徑中，例如：
 
 - `.ai-notes/`
-- `docs/`
-- 本地未追蹤的根級 AI 檔案，例如 `AGENTS.md`、`CLAUDE.md`、`GEMINI.md`
+- 機器相關的暫存索引與 scratch 檔
+- 任何不適合進入 Git 歷史的 AI 工作筆記
 
-這樣可以避免研究筆記、變更追蹤與 AI 專用索引檔進入公開 Git 歷史。
-
-目前清理策略下，這些根級 AI 檔案會繼續保留在本地，但從 Git 追蹤中移除。
+這樣可以把真正私有的工作上下文留在忽略路徑裡，同時讓倉庫把整理過的公開維護文件保留在版本控制中。
 
 ## 常見問題
 

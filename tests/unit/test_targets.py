@@ -19,12 +19,19 @@ class TestHarnessBundleBuilder:
 
         bundle = builder.render_bundle(HarnessTarget.CODEX_PROJECT, "standard")
         paths = {file.relative_path for file in bundle.files}
+        config_file = next(
+            file for file in bundle.files if file.relative_path == ".codex/config.toml"
+        )
 
         assert "AGENTS.md" in paths
         assert ".codex/config.toml" in paths
         assert ".codex/agents/explorer.toml" in paths
         assert ".codex/agents/reviewer.toml" in paths
         assert ".codex/agents/docs_researcher.toml" in paths
+        assert ".codex/agents/security_reviewer.toml" in paths
+        assert "[agents.security_reviewer]" in config_file.content
+        assert any(path.startswith(".agents/skills/coding-standards/") for path in paths)
+        assert any(path.startswith(".agents/skills/tdd-workflow/") for path in paths)
         assert any(path.startswith(".agents/skills/search-first/") for path in paths)
 
     def test_render_gemini_extension_bundle(self) -> None:
@@ -37,6 +44,9 @@ class TestHarnessBundleBuilder:
         assert "gemini-extension.json" in paths
         assert "GEMINI.md" in paths
         assert any(path.startswith("commands/") and path.endswith(".toml") for path in paths)
+        assert "agents/security-reviewer.md" in paths
+        assert any(path.startswith("skills/coding-standards/") for path in paths)
+        assert any(path.startswith("skills/tdd-workflow/") for path in paths)
         assert any(path.startswith("skills/search-first/") for path in paths)
 
     def test_portable_hooks_are_self_contained(self) -> None:
@@ -60,6 +70,19 @@ class TestHarnessBundleBuilder:
         assert "OHMYCLAUDE_ROOT" not in gemini_hooks.content
         assert "~/.claude" not in gemini_hooks.content
         assert "${extensionPath}" in gemini_hooks.content
+
+    def test_render_full_portable_bundles_include_skill_rules(self) -> None:
+        """Portable full bundles should include the skill-rules file."""
+        builder = HarnessBundleBuilder()
+
+        claude_plugin = builder.render_bundle(HarnessTarget.CLAUDE_PLUGIN, "full")
+        gemini_extension = builder.render_bundle(HarnessTarget.GEMINI_EXTENSION, "full")
+
+        plugin_paths = {file.relative_path for file in claude_plugin.files}
+        gemini_paths = {file.relative_path for file in gemini_extension.files}
+
+        assert "skills/skill-rules.json" in plugin_paths
+        assert "skills/skill-rules.json" in gemini_paths
 
     def test_render_codex_command_uses_bridge_wording(self) -> None:
         """Generated Codex commands should use bridge wording instead of legacy branding."""

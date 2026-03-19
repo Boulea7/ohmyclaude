@@ -38,7 +38,8 @@ OhMyClaude が狙うのはその中間です。
 |------|--------------|
 | Claude setup | `~/.claude/settings.json`、`~/.claude/CLAUDE.md`、commands、hooks、agents、skills を生成 |
 | Multi-harness bundles | `.claude-plugin/`、`.codex/`、`.agents/skills/`、Gemini extension bundle を明示的に render / install |
-| Workflow assets | `7` 個の commands、`10` 個の agents、`12` 個の skills、`8` 個の hook script テンプレートを導入 |
+| Workflow assets | `9` 個の commands、`11` 個の agents、`16` 個の skills、`8` 個の hook script テンプレートを導入 |
+| Curated phase 2 | `coding-standards`、`tdd-workflow`、`e2e-testing`、`worktree-isolation`、専用 `security-reviewer` を追加 |
 | MCP bundles | `templates/mcp/mcp_packages.yaml` から MCP パッケージ群を構成 |
 | Provider switching | 公式 / サードパーティ / カスタム provider を切り替え、Codex auth 同期は明示 opt-in |
 | Shell integration | `omc init` で shell 初期化ブロックを追加・削除 |
@@ -100,6 +101,7 @@ preset にある `codex` MCP パッケージは、**Claude ワークフロー内
 - 実際の `~/.claude`、`~/.codex`、Gemini ディレクトリに対して手動 smoke test をしない
 - まず `omc render` を使い、必要なら `omc install --dest ... --confirm` を明示先に対して実行する
 - `omc render` は実際の harness home ディレクトリへの書き込みを拒否する
+- `setup` は既存の同名 skills や `skill-rules.json` を静かに上書きせず、そのまま保持する
 
 ## Installation
 
@@ -166,12 +168,14 @@ omc switch glm
 | Preset | Positioning | Current Shape |
 |--------|-------------|---------------|
 | `starter` | 最小構成 | `basic` MCP、3 commands、2 agents、skill 導入なし |
-| `standard` | 日常開発向け推奨構成 | `basic + reasoning + code + codex`、4 commands、5 agents、inline hooks |
-| `full` | もっとも充実した Claude 資産セット | 7 基本 MCP グループ、3 optional MCP グループ、7 commands、10 agents、12 skills、8 hook scripts |
+| `standard` | 日常開発向け推奨構成 | `basic + reasoning + code + codex`、5 commands、6 agents、2 curated skills、inline hooks |
+| `full` | もっとも充実した Claude 資産セット | 7 基本 MCP グループ、3 optional MCP グループ、9 commands、11 agents、16 skills、8 hook scripts |
 
 補足：
 
 - この表は既定の `claude-home` 出力面を説明する
+- `standard` には `coding-standards`、`tdd-workflow`、`/tdd`、`security-reviewer` という軽量 curated baseline が追加された
+- `full` には `e2e-testing`、`worktree-isolation`、`/worktree` など、より実務寄りの追加資産が含まれる
 - `standard` と `full` の `codex` は **Claude 側 bridge**
 - ネイティブ Codex 導入機能そのものではない
 - 公開文言は新しい Claude / Codex 用語に合わせてあるが、実際の挙動は現行コードで決まる
@@ -191,8 +195,8 @@ omc switch glm
 
 plugin / Gemini 向け portable hooks は現在、完全版の一部だけを切り出した **self-contained subset** です。
 
-- home ディレクトリ依存を避けるよう設計されている
-- ただし `full` preset の Claude home 用 hook 群と完全に 1 対 1 対応しているわけではない
+- 現状は `OHMYCLAUDE_ROOT` への直接依存を減らし、bundle-local リソースを優先する段階にある
+- それでも一部に Claude 寄りの fallback が残っており、`full` preset の Claude home 用 hook 群と完全に 1 対 1 対応しているわけではない
 
 ## Repository Layout
 
@@ -226,6 +230,8 @@ tests/
 - `README.zh-CN.md`
 - `README.zh-TW.md`
 - `README.ja.md`
+- `docs/`
+- `AGENTS.md` や `CLAUDE.md` など、追跡対象のメンテナ文書
 - `src/`
 - `templates/`
 - `tests/`
@@ -236,12 +242,10 @@ tests/
 ローカル専用資料は、無視されるパスに置きます。
 
 - `.ai-notes/`
-- `docs/`
-- `AGENTS.md`、`CLAUDE.md`、`GEMINI.md` のようなローカル未追跡のルート AI ファイル
+- マシン依存の一時インデックスや scratch ファイル
+- Git 履歴へ入れたくない AI 作業メモ
 
-これにより、調査メモ、変更追跡、AI 専用インデックスが公開 Git 履歴へ混入するのを防ぎます。
-
-現在の整理方針では、これらのルート AI ファイルはローカルに残しつつ、Git 追跡対象から外します。
+これにより、本当に私的な作業コンテキストを ignore 領域へ分離しつつ、整理済みの公開メンテナ文書はリポジトリで管理できます。
 
 ## FAQ / よくある質問
 

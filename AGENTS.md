@@ -4,6 +4,7 @@
 OhMyClaude 是一个用于 **一键配置 Claude Code** 的命令行工具，主要能力包括：
 - 生成并安装 `~/.claude/settings.json`、`~/.claude/CLAUDE.md`
 - 安装 Slash Commands、Hooks、Agents 等模板资源
+- 渲染/安装 `claude-home`、`claude-plugin`、`codex-project`、`gemini-extension` 四类显式 bundle
 - 管理/切换 API Provider（官方/第三方/自定义），并可同步 Codex 相关配置
 - 提供 `doctor` 健康检查与 `init` Shell 集成（向 RC 文件写入可幂等的 sentinel block）
 
@@ -63,12 +64,15 @@ OhMyClaude 是一个用于 **一键配置 Claude Code** 的命令行工具，主
 ---
 
 ## 5. 变更记录（Changelog）
+- 2026-03-20：完成第二阶段精选资产吸收：新增 `coding-standards`、`tdd-workflow`、`e2e-testing`、`worktree-isolation` 四组 skills，新增 `security-reviewer` agent 与 `/tdd`、`/worktree` 命令；同时把 `coding-standards`、`tdd-workflow` 纳入 portable baseline，并补齐 `full` preset 下 `skill-rules.json` 的真实落地链路。
 - 2025-12-13：修复全量 mypy 严格模式类型错误（补全泛型参数、补齐缺失注解、修复 `no-any-return`/第三方库类型问题），并确保 `pytest` 全量通过。
 - 2025-12-13：修复 23 个 Ruff `E501` 行长问题（函数签名/多重 `patch`/长断言拆行），并确保 `ruff check` 与 `pytest` 全量通过。
 
 ---
 
 ## 6. 规划/待办（Roadmap）
+- 继续补轻量 install-state / troubleshooting 支撑层，但避免把 CLI 演化成重运行时框架。
+- 扩展 target-aware 验证：尤其是 `claude-plugin` / `gemini-extension` 的 hook、skill、agent 兼容检查。
 - 提升覆盖率：为 `ui/progress.py`、`ui/theme.py`、`modules/mcp.py` 等补充单测，降低对 coverage 阈值的敏感度。
 - 类型依赖收敛：评估是否将 `types-PyYAML` 固定到开发依赖（减少 `import-untyped` 相关处理）。
-- Provider 与模板：补充更多预设与模板（含中文说明），并完善 `doctor` 的诊断建议。
+- Provider 与模板：继续只引入高复用、低状态、跨 harness 易解释的精选资产，并完善 `doctor` 的诊断建议。

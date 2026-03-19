@@ -36,6 +36,10 @@ class TestConfigEngine:
         assert preset.name == "standard"
         assert len(preset.mcp_packages) > 1
         assert len(preset.commands) > 0
+        assert "tdd" in preset.commands
+        assert "security-reviewer" in preset.agents
+        assert "coding-standards" in preset.skills
+        assert "tdd-workflow" in preset.skills
 
     def test_load_preset_full(self, config_engine: ConfigEngine):
         """Test loading full preset."""
@@ -44,6 +48,10 @@ class TestConfigEngine:
         assert preset.name == "full"
         assert preset.include_codex is True
         assert len(preset.agents) > 5
+        assert "worktree" in preset.commands
+        assert "security-reviewer" in preset.agents
+        assert "e2e-testing" in preset.skills
+        assert "worktree-isolation" in preset.skills
 
     def test_load_preset_not_found(self, config_engine: ConfigEngine):
         """Test loading nonexistent preset raises error."""

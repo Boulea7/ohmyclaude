@@ -70,19 +70,19 @@ def create_preset_table() -> Table:
     table.add_row(
         "[green]Starter[/]",
         "filesystem, context7",
-        "/commit, /review",
+        "/commit, /review, /test",
         "~3,300 (~2%)",
     )
     table.add_row(
         "[blue]Standard[/]",
-        "+ web-reader, web-search",
-        "+ /test, /codex",
+        "+ reasoning, code, codex",
+        "starter + /tdd, /codex",
         "~5,500 (~3.5%)",
     )
     table.add_row(
         "[magenta]Full[/]",
-        "+ zai-mcp, unified-diff",
-        "+ /dev-docs",
+        "+ browser, web-free, diff",
+        "standard + /worktree, /dev-docs",
         "~8,800 (~6%)",
     )
 

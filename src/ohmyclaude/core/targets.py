@@ -36,18 +36,26 @@ _HOOK_PRESET_SCRIPTS: dict[str, tuple[str, ...]] = {
 }
 _PORTABLE_SKILLS: tuple[str, ...] = (
     "api-design",
+    "coding-standards",
     "deep-research",
     "git-workflow",
     "performance",
     "search-first",
     "security-review",
+    "tdd-workflow",
     "verification-loop",
 )
 _PORTABLE_GEMINI_AGENTS: tuple[str, ...] = (
     "code-reviewer",
     "debugger",
     "plan-reviewer",
+    "security-reviewer",
 )
+_SKILL_SUPPORT_FILES: dict[str, tuple[str, ...]] = {
+    "basic": (),
+    "standard": (),
+    "full": ("skill-rules.json",),
+}
 
 
 class HarnessTarget(str, Enum):
@@ -398,6 +406,7 @@ class HarnessBundleBuilder:
         files.extend(self._render_markdown_agents(preset.agents, "agents"))
         files.extend(self._render_hook_scripts(preset, "hooks"))
         files.extend(self._render_skills(preset.skills, "skills"))
+        files.extend(self._render_skill_support_files(preset, "skills"))
         return files
 
     def _render_claude_plugin(self, preset: PresetConfig) -> list[RenderedFile]:
@@ -412,6 +421,7 @@ class HarnessBundleBuilder:
         files.extend(self._render_markdown_agents(preset.agents, "agents"))
         files.extend(self._render_hook_scripts(preset, "hooks"))
         files.extend(self._render_skills(preset.skills, "skills"))
+        files.extend(self._render_skill_support_files(preset, "skills"))
         hooks_json = json.dumps(
             {
                 "$schema": "https://json.schemastore.org/claude-code-settings.json",
@@ -460,6 +470,10 @@ class HarnessBundleBuilder:
                 ".codex/agents/docs_researcher.toml",
                 self.engine.render_template("codex/agents/docs_researcher.toml.j2", {}),
             ),
+            RenderedFile(
+                ".codex/agents/security_reviewer.toml",
+                self.engine.render_template("codex/agents/security_reviewer.toml.j2", {}),
+            ),
         ]
         files.extend(self._render_skills(portable_skills, ".agents/skills"))
         return files
@@ -488,6 +502,7 @@ class HarnessBundleBuilder:
         files.extend(self._render_gemini_commands(preset))
         files.extend(self._render_hook_scripts(preset, "hooks"))
         files.extend(self._render_skills(portable_skills, "skills"))
+        files.extend(self._render_skill_support_files(preset, "skills"))
         files.extend(self._render_markdown_agents(_PORTABLE_GEMINI_AGENTS, "agents"))
         hooks_json = json.dumps(
             {
@@ -709,6 +724,29 @@ class HarnessBundleBuilder:
                         executable=source_file.suffix == ".sh",
                     )
                 )
+
+        return rendered
+
+    def _render_skill_support_files(
+        self,
+        preset: PresetConfig,
+        prefix: str,
+    ) -> list[RenderedFile]:
+        """Render shared skill support files such as activation rules."""
+        source_root = self.templates_dir / "skills"
+        rendered: list[RenderedFile] = []
+        file_names = _SKILL_SUPPORT_FILES.get(preset.hooks_preset, ())
+
+        for file_name in file_names:
+            source_file = source_root / file_name
+            if not source_file.exists() or not source_file.is_file():
+                continue
+            rendered.append(
+                RenderedFile(
+                    str(Path(prefix) / file_name),
+                    source_file.read_text(encoding="utf-8"),
+                )
+            )
 
         return rendered
 

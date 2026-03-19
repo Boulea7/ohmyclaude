@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
 interface HookInput {
     session_id: string;
@@ -41,11 +42,17 @@ async function main() {
         const prompt = data.prompt.toLowerCase();
 
         // Load skill rules
-        const projectDir = process.env.CLAUDE_PROJECT_DIR || (process.env.HOME ? join(process.env.HOME, 'project') : process.cwd());
-        const rulesPath = join(projectDir, '.claude', 'skills', 'skill-rules.json');
+        const scriptDir = dirname(fileURLToPath(import.meta.url));
+        const projectDir = process.env.CLAUDE_PROJECT_DIR || data.cwd;
+        const rulesCandidates = [
+            join(projectDir, '.claude', 'skills', 'skill-rules.json'),
+            join(scriptDir, '..', 'skills', 'skill-rules.json'),
+            join(process.env.HOME || '', '.claude', 'skills', 'skill-rules.json'),
+        ];
+        const rulesPath = rulesCandidates.find(candidate => existsSync(candidate));
 
         // Skip if rules file doesn't exist
-        if (!existsSync(rulesPath)) {
+        if (!rulesPath) {
             process.exit(0);
         }
 

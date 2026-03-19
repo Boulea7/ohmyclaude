@@ -20,6 +20,10 @@ They are **not** a guarantee of automatic activation by themselves.
 
 Current template groups:
 
+- `coding-standards`
+- `tdd-workflow`
+- `e2e-testing`
+- `worktree-isolation`
 - `backend-dev-guidelines`
 - `frontend-dev-guidelines`
 - `route-tester`
@@ -38,6 +42,18 @@ For Claude home installs, these are installed only by presets that opt into them
 For generated `codex-project` and `gemini-extension` bundles, OhMyClaude may also
 include a portable baseline skill set even when a preset does not list every
 skill explicitly.
+
+The current portable baseline is intentionally curated and centered on:
+
+- `api-design`
+- `coding-standards`
+- `deep-research`
+- `git-workflow`
+- `performance`
+- `search-first`
+- `security-review`
+- `tdd-workflow`
+- `verification-loop`
 
 ## Activation Model
 
@@ -77,6 +93,46 @@ Use it when you need to:
 - split a large skill into resources
 - design trigger rules
 - debug skill activation behavior
+
+### coding-standards
+
+Shared KISS/DRY/YAGNI guardrails for writing and reviewing code.
+
+Best suited for:
+
+- keeping new changes simple
+- reviewing maintainability tradeoffs
+- reducing unnecessary abstractions
+
+### tdd-workflow
+
+Practical RED-GREEN-REFACTOR guidance for feature work and regression fixes.
+
+Best suited for:
+
+- writing one failing test at a time
+- protecting refactors with behavior-based tests
+- turning bug reports into repeatable regressions
+
+### e2e-testing
+
+Stable browser-flow testing guidance for Playwright and similar suites.
+
+Best suited for:
+
+- designing critical user-flow coverage
+- reviewing flaky end-to-end tests
+- improving selectors, waits, and CI artifacts
+
+### worktree-isolation
+
+Safe git worktree setup guidance for isolated or parallel work.
+
+Best suited for:
+
+- risky feature work
+- parallel investigations
+- clean handoffs between execution lanes
 
 ### backend-dev-guidelines
 
@@ -131,6 +187,10 @@ If you also want auto-activation:
 1. copy `skill-rules.json`
 2. copy the matching hook scripts
 3. customize path and intent triggers for the project
+
+In generated `claude-home`, `claude-plugin`, and `gemini-extension` outputs,
+OhMyClaude now ships that `skill-rules.json` file automatically when the `full`
+preset enables the activation hooks.
 
 ### Codex
 

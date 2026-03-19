@@ -1,7 +1,7 @@
 # 2026 生态调研与维护结论
 
 > 状态：Current
-> 更新时间：2026-03-19
+> 更新时间：2026-03-20
 
 ## 1. 调研目标
 
@@ -131,11 +131,21 @@
 - `switch` 改成默认不触碰 Codex，只有显式 opt-in 才同步
 - 可移植技能资产扩充为更适合 Codex / Gemini 输出的通用集合
 
+### 已落地的第二阶段（精选内容吸收）
+
+- 从外部生态中只吸收 **高复用、低状态、跨 harness 易解释** 的工程资产
+- 新增精选 skills：`coding-standards`、`tdd-workflow`、`e2e-testing`、`worktree-isolation`
+- 新增精选 agent：`security-reviewer`
+- 新增 workflow commands：`/tdd`、`/worktree`
+- 把 `coding-standards`、`tdd-workflow` 纳入 portable baseline，使 `codex-project` 与 `gemini-extension` 拿到更稳的通用技能层
+- 修正 `skill-rules.json` 的实际落地链路，让 `full` preset 的 skill auto-activation 不再停留在文档层
+
 ### 暂不做
 
 - 暂不做多 harness 的隐式 home 目录安装
 - 暂不做 Gemini 全局配置合并
 - 暂不把所有参考仓库的资产规模直接照搬进来
+- 暂不引入 continuous learning / instinct 系统、多模型 control plane、PM2/loop/autopilot 等重型运行时能力
 
 ## 8. 后续维护建议
 

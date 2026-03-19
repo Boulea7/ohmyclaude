@@ -38,7 +38,8 @@ OhMyClaude aims for the middle:
 |------|--------------|
 | Claude setup | Generate `~/.claude/settings.json`, `~/.claude/CLAUDE.md`, commands, hooks, agents, and skills |
 | Multi-harness bundles | Render or install `.claude-plugin/`, `.codex/`, `.agents/skills/`, and Gemini extension bundles to explicit destinations |
-| Workflow assets | Install `7` commands, `10` agents, `12` skills, and `8` hook script templates |
+| Workflow assets | Install `9` commands, `11` agents, `16` skills, and `8` hook script templates |
+| Curated phase 2 | Add `coding-standards`, `tdd-workflow`, `e2e-testing`, `worktree-isolation`, and a dedicated `security-reviewer` |
 | MCP bundles | Compose MCP groups from `templates/mcp/mcp_packages.yaml` |
 | Provider switching | Switch official, third-party, and custom providers with backup support and explicit Codex auth opt-in |
 | Shell integration | Add or remove shell initialization blocks via `omc init` |
@@ -75,6 +76,7 @@ If you are developing or maintaining this repository locally and do not want acc
 - do not manually smoke test against your real `~/.claude`, `~/.codex`, or Gemini directories
 - prefer `omc render` and explicit `omc install --dest ... --confirm` into temporary locations
 - `omc render` refuses paths inside your real harness home directories by design
+- `setup` now preserves existing same-named skills and `skill-rules.json` instead of silently overwriting them
 
 ## Installation
 
@@ -141,12 +143,14 @@ omc switch glm
 | Preset | Positioning | Current Shape |
 |--------|-------------|---------------|
 | `starter` | smallest useful setup | `basic` MCP, 3 commands, 2 agents, no skill install |
-| `standard` | recommended daily workflow | `basic + reasoning + code + codex`, 4 commands, 5 agents, inline hooks |
-| `full` | most complete Claude asset set | 7 base MCP groups, 3 optional MCP groups, 7 commands, 10 agents, 12 skills, 8 hook scripts |
+| `standard` | recommended daily workflow | `basic + reasoning + code + codex`, 5 commands, 6 agents, 2 curated skills, inline hooks |
+| `full` | most complete Claude asset set | 7 base MCP groups, 3 optional MCP groups, 9 commands, 11 agents, 16 skills, 8 hook scripts |
 
 Notes:
 
 - this table describes the default `claude-home` install surface
+- `standard` now includes a lightweight curated baseline: `coding-standards`, `tdd-workflow`, `/tdd`, and `security-reviewer`
+- `full` adds browser-facing and isolation-oriented assets such as `e2e-testing`, `worktree-isolation`, and `/worktree`
 - the `codex` preset entry is a **Claude-side bridge path**
 - it is not the same thing as native Codex project instructions, native Codex skills, or `.codex/config.toml`
 - public wording in this repository now follows modern Claude / Codex terminology more closely, but runtime behavior is still defined by the current codebase
@@ -167,8 +171,9 @@ the CLI inspects the intended bundle root instead of falling back to `cwd` or
 `~/.claude`.
 
 Portable plugin and Gemini hooks are currently a self-contained subset of the
-full Claude home hook behavior. They avoid home-directory assumptions, but they
-do not yet mirror every `full` preset hook one-for-one.
+full Claude home hook behavior. They remove direct `OHMYCLAUDE_ROOT` coupling
+and prefer bundle-local assets, but some scripts still keep Claude-oriented
+fallbacks and do not yet mirror every `full` preset hook one-for-one.
 
 ## Repository Layout
 
@@ -202,6 +207,8 @@ The public surface of the repository should primarily be:
 - `README.zh-CN.md`
 - `README.zh-TW.md`
 - `README.ja.md`
+- `docs/`
+- tracked maintainer docs such as `AGENTS.md` and `CLAUDE.md`
 - `src/`
 - `templates/`
 - `tests/`
@@ -212,12 +219,10 @@ The public surface of the repository should primarily be:
 Private local material should stay in ignored paths such as:
 
 - `.ai-notes/`
-- `docs/`
-- local untracked root files such as `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md`
+- machine-specific scratch files and temporary indexes
+- extra AI-facing notes that are not meant to be shared in Git history
 
-This keeps research notes, local index files, and AI-specific working context out of public Git history.
-
-In the current cleanup strategy, those root AI files are kept locally for private workflows, but removed from Git tracking.
+This keeps truly private working context out of public Git history while allowing the repository to keep its curated maintainer docs under version control.
 
 ## FAQ
 
@@ -258,7 +263,8 @@ pytest
 The most realistic next steps are:
 
 - deepen target-specific validation for Claude plugin and Gemini extension outputs
-- expand the shared portable skill and agent set without bloating default presets
+- add a lightweight install-state and troubleshooting layer without turning the CLI into a heavy runtime framework
+- keep expanding curated shared skills and native Codex/Gemini target quality without bloating default presets
 - add more target-aware doctor checks and troubleshooting docs
 - keep the install surface explicit and local-safe as multi-harness support grows
 

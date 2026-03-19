@@ -40,12 +40,14 @@ commands:
   - commit   # Smart Git commit with Conventional Commits
   - review   # Code review with AI
   - test     # Run tests and analyze failures
+  - tdd      # Drive implementation with a test-first loop
   - codex    # Delegate task to Codex CLI
 
 # Agent templates to install
 agents:
   - code-reviewer    # Code review specialist
   - debugger         # Debugging assistant
+  - security-reviewer  # Security-focused review specialist
   - test-engineer    # Test automation expert
   - refactor-expert  # Refactoring specialist
   - doc-writer       # Technical documentation
@@ -76,8 +78,10 @@ hooks:
 # Codex compatibility hints in generated templates
 include_codex: false
 
-# Skills (optional, can be enabled manually)
-skills: []
+# Curated skills included in the standard preset
+skills:
+  - coding-standards
+  - tdd-workflow
 
 # Resource consumption estimates
 estimated_resources:
@@ -93,7 +97,9 @@ estimated_resources:
 upgrade_to: full
 upgrade_benefits:
   - Stronger Codex-aware reference material
+  - Browser-level E2E testing guidance
   - Image and video analysis
   - Skill auto-activation system
   - Complete hook workflows
+  - Isolated worktree workflow support
   - Richer agent and workflow templates

@@ -27,6 +27,7 @@ They are **not** a claim that OhMyClaude is a hosted multi-harness agent marketp
 | `doc-writer` | Technical documentation |
 | `code-architecture-reviewer` | Architecture review |
 | `auto-error-resolver` | Error triage and resolution |
+| `security-reviewer` | Security-focused review before merge |
 | `web-research-specialist` | Research and source gathering |
 | `documentation-architect` | Documentation structure design |
 | `plan-reviewer` | Plan validation |

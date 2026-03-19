@@ -45,10 +45,12 @@ commands:
   - commit              # Smart Git commit with Conventional Commits
   - review              # Code review with AI
   - test                # Run tests and analyze failures
+  - tdd                 # Drive implementation with a test-first loop
   - codex               # Delegate task to Codex CLI
   - dev-docs            # Dev docs workflow (from showcase)
   - update-docs         # Update documentation
   - strategic-planning  # Strategic planning workflow
+  - worktree            # Set up an isolated git worktree
 
 # Agent templates to install
 # Includes the full current agent template set
@@ -56,6 +58,7 @@ agents:
   # Core agents
   - code-reviewer           # Code review specialist
   - debugger                # Debugging assistant
+  - security-reviewer       # Security-focused review specialist
   - test-engineer           # Test automation expert
   - refactor-expert         # Refactoring specialist
   - doc-writer              # Technical documentation
@@ -129,6 +132,10 @@ codex:
 
 # Skills bundled with the full preset
 skills:
+  - coding-standards
+  - tdd-workflow
+  - e2e-testing
+  - worktree-isolation
   - frontend-dev-guidelines
   - backend-dev-guidelines
   - skill-developer
@@ -141,37 +148,6 @@ skills:
   - search-first
   - security-review
   - verification-loop
-
-# Skill rules configuration
-skill_rules:
-  frontend-dev-guidelines:
-    type: guardrail
-    enforcement: suggest
-    priority: high
-    prompt_triggers:
-      keywords:
-        - component
-        - React
-        - MUI
-        - UI
-        - frontend
-      intent_patterns:
-        - "(create|build).*?(component|UI|page)"
-
-  backend-dev-guidelines:
-    type: domain
-    enforcement: suggest
-    priority: high
-    prompt_triggers:
-      keywords:
-        - backend
-        - controller
-        - service
-        - route
-        - API
-        - endpoint
-      intent_patterns:
-        - "(create|add|implement).*?(route|endpoint|API|controller)"
 
 # Resource consumption estimates
 estimated_resources:

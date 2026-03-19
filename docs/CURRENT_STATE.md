@@ -1,7 +1,7 @@
 # 当前实现与边界
 
 > 状态：Current
-> 更新时间：2026-03-19
+> 更新时间：2026-03-20
 
 ## 1. 仓库当前定位
 
@@ -44,13 +44,21 @@ OhMyClaude 当前是一个 **以 Claude 为默认主线、同时支持多 harnes
 
 当前模板库存量：
 
-- `commands/`: 7 个
-- `agents-showcase/`: 10 个
-- `skills/`: 12 组
+- `commands/`: 9 个
+- `agents-showcase/`: 11 个
+- `skills/`: 16 组
 - `hooks/`: 8 个脚本
 - `claude_md/`: 3 个主要模板
 
 这些模板仍以 **Claude Code 工作流资产** 为核心，但现在已经能组合成多个显式输出面。
+
+第二阶段精选吸收已经落地一批更通用的工程资产：
+
+- `coding-standards`
+- `tdd-workflow`
+- `e2e-testing`
+- `worktree-isolation`
+- `security-reviewer`
 
 ## 4. 预设的真实行为
 
@@ -66,14 +74,19 @@ OhMyClaude 当前是一个 **以 Claude 为默认主线、同时支持多 harnes
 ### standard
 
 - 在 starter 基础上增加更多 MCP 包与 commands
-- 安装 5 个 agents
+- 默认增加 `/tdd`
+- 安装 6 个 agents
+- 默认安装 2 个精选 skills：`coding-standards`、`tdd-workflow`
 - hooks 主要以内联 JSON 配置为主，不复制 hook 脚本
 
 ### full
 
 - 安装最完整的模板资产
+- 在 `standard` 基础上增加 `/worktree`
 - 复制 8 个 hook 脚本到 `~/.claude/hooks/`
-- 安装 12 组 skills
+- 安装 16 组 skills
+- 安装 11 个 agents
+- 会额外落地 `skills/skill-rules.json`，把 full preset 的 skill auto-activation 真正接通
 - 同一批模板资产也可被渲染到 Codex / Gemini / Claude plugin bundle
 - 这里描述的是默认 `claude-home` 输出面；portable bundle 会做额外的可移植性裁剪
 
@@ -87,15 +100,19 @@ OhMyClaude 当前是一个 **以 Claude 为默认主线、同时支持多 harnes
   - 生成 `.claude-plugin/plugin.json` 与对应 bundle 目录
 - `codex-project`
   - 生成 `AGENTS.md`、`.codex/config.toml`、`.codex/agents/`、`.agents/skills/`
+  - 现在会同时生成 `security_reviewer` 原生角色文件，并在 `.codex/config.toml` 中注册它
+  - 也包含扩充后的 portable skills 基线
 - `gemini-extension`
   - 生成 `gemini-extension.json`、`GEMINI.md`、`commands/`、`hooks/`、`agents/`、`skills/`
+  - 现在固定携带 4 个精选 markdown agents，并在 `full` 预设下附带 `skill-rules.json`
 
 这些输出都要求显式目标路径，不会在命令内部自动推导真实 home 目录。
 
 其中 `claude-plugin` 和 `gemini-extension` 的 hooks 目前采用可移植子集策略：
 
 - 优先保证 bundle 内路径自包含
-- 不再依赖 `~/.claude` 或 `${OHMYCLAUDE_ROOT}`
+- 已去掉对 `${OHMYCLAUDE_ROOT}` 的直接依赖，并优先读取 bundle-local 资源
+- 仍保留部分 Claude 导向 fallback，不能视为完全独立于 home 目录假设
 - 暂时不追求与 `full` 预设在 `claude-home` 下完全等价
 
 ## 6. Codex 相关边界
