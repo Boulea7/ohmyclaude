@@ -1,76 +1,72 @@
 # Security Policy
 
-## Reporting Security Vulnerabilities
+## Reporting a Vulnerability
 
-If you discover a security vulnerability, please report it through GitHub Issues:
+If you discover a security issue in OhMyClaude:
 
-1. Go to [Issues](https://github.com/Boulea7/ohmyclaude/issues)
-2. Create a new issue with the `security` label
-3. Provide detailed information about the vulnerability
+1. open a GitHub issue with enough reproduction detail for non-sensitive problems
+2. use private reporting channels if the issue would expose users to immediate risk
+3. include environment details, affected command flow, and expected vs actual behavior
 
-For critical vulnerabilities that should not be disclosed publicly, please use GitHub's private vulnerability reporting feature if available.
+## Security Scope
 
-## Response Timeline
+OhMyClaude is a local CLI for generating and installing Claude Code configuration and workflow assets.
 
-| Stage | Timeline |
-|-------|----------|
-| Acknowledgment | Within 48 hours |
-| Initial assessment | Within 72 hours |
-| Fix timeline | Based on severity |
+Important current behaviors:
+
+- it reads and writes inside `~/.claude/`
+- it reads and writes inside `~/.ohmyclaude/`
+- it can render or install bundle assets into explicit caller-provided target roots
+- it updates `~/.codex/auth.json` only when switching to an OpenAI-compatible provider with `--sync-codex-auth`
+- it does **not** collect telemetry or analytics
 
 ## Supported Versions
 
 | Version | Security Support |
 |---------|------------------|
-| 1.x | ✅ Supported |
-| < 1.0 | ❌ Not supported |
+| 1.x | Supported |
+| < 1.0 | Not supported |
 
 ## Security Best Practices
 
-When using OhMyClaude, please follow these guidelines:
+### Secrets
 
-### API Key Security
+- keep API credentials in environment variables
+- never hardcode secrets in repository files
+- do not commit generated local configuration or private AI notes
 
-- **Use environment variables** to store API keys
-- **Never hardcode** API keys in configuration files
-- Use `omc switch` to manage provider credentials securely
+### Local Configuration
 
-```bash
-# Good: Use environment variable
-export ANTHROPIC_AUTH_TOKEN="your-key"
+- do not commit your real `~/.claude/settings.json`
+- do not commit your real `~/.codex/auth.json`
+- keep local AI working files in ignored paths such as `.ai-notes/`
 
-# Bad: Hardcoded in files (don't do this)
-```
+### Provider Switching
 
-### Configuration Files
+When testing or reviewing provider changes:
 
-- Do not commit `~/.claude/settings.json` to version control
-- The `.gitignore` template excludes sensitive files by default
-- Review generated configurations before sharing
+- prefer plain `omc switch <provider>` for default-safe provider changes
+- use `--sync-codex-auth` only when Codex auth changes are intentional
+- treat `--skip-codex` as a deprecated compatibility flag, not the primary workflow
+- inspect backups before restoring or deleting them
+- review diff and generated config before sharing outputs
 
-### MCP Server Security
+### Template Safety
 
-- Only install MCP servers from trusted sources
-- Review MCP server permissions before installation
-- Use `omc doctor` to verify configuration integrity
+- only enable MCP servers from trusted sources
+- review hook behavior before installing the `full` preset
+- prefer minimum required permissions and minimum required automation
 
-## Security Considerations
+## Data Handling
 
-### What OhMyClaude Accesses
+- backups stay local
+- generated files stay local unless you explicitly publish them
+- the project is designed so repository tests can run against temporary paths instead of real user directories
 
-| Resource | Access Level | Purpose |
-|----------|--------------|---------|
-| `~/.claude/` | Read/Write | Claude Code configuration |
-| `~/.ohmyclaude/` | Read/Write | Backups and provider settings |
-| System keyring | Read/Write | Credential storage |
-| PyPI API | Read-only | Version checking |
+## Response Expectations
 
-### Data Handling
-
-- OhMyClaude does **not** collect telemetry or analytics
-- API keys are stored in the system keyring when possible
-- Backups are stored locally and never transmitted
-
-## Acknowledgments
-
-We appreciate security researchers who help improve OhMyClaude. Contributors who report valid security issues will be acknowledged in our release notes (unless they prefer to remain anonymous).
+| Stage | Target |
+|-------|--------|
+| Acknowledgment | Within 48 hours |
+| Initial assessment | Within 72 hours |
+| Fix timeline | Based on severity and reproducibility |
