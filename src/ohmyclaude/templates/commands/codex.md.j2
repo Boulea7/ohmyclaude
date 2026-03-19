@@ -1,15 +1,18 @@
 ---
-description: Delegate task to Codex CLI for execution
+description: Coordinate with a configured Codex bridge for analysis or review
 argument-hint: <task description for Codex>
 ---
 
-You are coordinating with Codex CLI to accomplish a task. Use the CodexMCP tool to delegate work and collaborate on solutions.
-你将与 Codex CLI 协同完成任务，使用 CodexMCP 工具进行委派与协作。
+This command is a **Claude-side compatibility wrapper** for environments that have a `codex` MCP bridge configured.
+该命令是一个 **Claude 侧兼容封装**，适用于已经配置 `codex` MCP bridge 的环境。
+
+It is not a replacement for native Codex features such as `AGENTS.md`, native skills, or `.codex/config.toml`.
+它不能替代 Codex 官方原生的 `AGENTS.md`、skills 或 `.codex/config.toml`。
 
 ## Task / 任务
 
-Delegate the specified task to Codex CLI and collaborate on the results.
-将指定任务委托给 Codex CLI 并协作完成。
+Use the configured Codex bridge to analyze, review, or prototype a task, then validate the result before taking action.
+使用已配置的 Codex bridge 对任务进行分析、审查或原型输出，再在 Claude 侧完成验证和后续动作。
 
 ## Arguments / 参数
 
@@ -17,102 +20,71 @@ Delegate the specified task to Codex CLI and collaborate on the results.
 
 ## Workflow / 流程
 
-### 1. Prepare Task / 准备任务
+### 1. Prepare / 准备
 
-Before calling Codex:
-- Understand the user's request clearly
-- Identify what Codex is best suited for (debugging, analysis, code generation)
-- Formulate a clear, specific prompt
-- Remove or mask any secrets before sending context / 发送上下文前移除或掩盖所有密钥
+Before calling the bridge:
 
-### 2. Call Codex / 调用 Codex
+- Clarify the user request
+- Decide whether Codex is actually helpful for this task
+- Strip secrets, tokens, or proprietary data from the prompt
+- Prefer read-only analysis unless the user explicitly wants write-capable delegation
 
-Use the `mcp__codex__codex` tool with these parameters:
+### 2. Call The Bridge / 调用 bridge
+
+Use the `mcp__codex__codex` tool only if it is available in the current Claude environment.
+
+Recommended parameters:
 
 ```python
 {
     "PROMPT": "$ARGUMENTS",
     "cd": "/current/working/directory",
-    "sandbox": "read-only",  # Default: safe mode
-    "SESSION_ID": "",  # Empty for new session
+    "sandbox": "read-only",
+    "SESSION_ID": "",
     "return_all_messages": false
 }
 ```
 
-**Sandbox Modes / 沙箱模式**:
-- `read-only` - Default, safe for analysis / 默认，安全分析
-- `workspace-write` - Allow file modifications / 允许文件修改
-- `danger-full-access` - Full access (use with caution) / 完全访问（谨慎使用）
-
-### 3. Review Results / 审查结果
+### 3. Review / 审查
 
 After Codex responds:
-1. **Verify accuracy** / 验证准确性
-   - Check if the solution is correct
-   - Validate any code suggestions
 
-2. **Challenge assumptions** / 质疑假设
-   - Does the solution address the root cause?
-   - Are there edge cases not considered?
+1. Check whether the answer matches the user's actual goal
+2. Validate any code suggestions against the current repository
+3. Continue the session only if the returned `SESSION_ID` is meaningful for follow-up
 
-3. **Refine if needed** / 必要时改进
-   - Use the returned `SESSION_ID` to continue the conversation
-   - Ask follow-up questions for clarification
+### 4. Apply Carefully / 谨慎落地
 
-### 4. Implement Solution / 实施方案
+If the bridge returns a patch or proposal:
 
-If Codex provides a solution:
-- Review the unified diff patch carefully
-- Rewrite the code for production quality if needed
-- Apply changes using appropriate tools
+- Review it before making changes
+- Prefer rewriting or adapting the result for repository quality
+- Keep Claude responsible for the final decision
 
-## Collaboration Protocol / 协作协议
+## Safety / 安全要求
 
-### Key Rules / 关键规则
+- Default to `sandbox="read-only"`
+- Never send secrets, tokens, or private data
+- Treat bridge output as advisory, not authoritative
+- If the bridge is not configured, explain that this command is a compatibility shortcut and should not be forced
 
-1. **Save SESSION_ID** / 保存会话 ID
-   - Store the `SESSION_ID` from Codex responses
-   - Use it to continue multi-turn conversations
+## Good Use Cases / 适用场景
 
-2. **Read-Only by Default** / 默认只读
-   - Always use `sandbox="read-only"` unless modification is explicitly needed
-   - Request unified diff patches, not direct file changes
+- Deep debugging assistance
+- Second-pass code review
+- Alternative implementation sketch
+- Comparing two design options
 
-3. **Critical Thinking** / 批判性思考
-   - Codex provides suggestions, not absolute answers
-   - Verify with official documentation when needed
-   - Challenge responses that seem incorrect
+## Poor Use Cases / 不适用场景
 
-4. **Complementary Strengths** / 互补优势
-   - **Claude Code**: Requirements analysis, architecture, user interaction
-   - **Codex**: Algorithm implementation, debugging, code review
+- Very small edits
+- Tasks that need only local reasoning
+- Situations where official docs are the primary source of truth
 
-## Example Usage / 使用示例
+## Reminder / 说明
 
-### Debug a Function / 调试函数
-```
-/codex Debug why the `parse_config` function fails with empty input
-```
+If you need **native Codex** behavior instead of a Claude-side bridge:
 
-### Analyze Performance / 分析性能
-```
-/codex Analyze the time complexity of the sorting algorithm in utils.py
-```
-
-### Review Changes / 审查变更
-```
-/codex Review the recent changes to the authentication module for security issues
-```
-
-## Safety & Compliance / 安全合规
-
-- Keep sandbox at `read-only` unless the user explicitly approves write access / 未经用户明确授权保持 `read-only`
-- Never send credentials, tokens, or proprietary data to Codex / 禁止传递凭据、令牌或机密数据
-- Log the `SESSION_ID` only in safe notes; avoid persisting in source files / 仅在安全位置记录 `SESSION_ID`，不要写入源码
-
-## Quality Standards / 质量标准
-
-- Always verify Codex's suggestions before implementing
-- Use Codex for complex analysis, not simple tasks
-- Document any significant decisions made with Codex's help
-- If Codex's response is uncertain, ask for clarification or evidence
+- use Codex directly
+- keep `AGENTS.md` aligned
+- manage Codex settings through `.codex/config.toml`

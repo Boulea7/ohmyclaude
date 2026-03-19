@@ -66,12 +66,12 @@ packages:
       - serena
 
   # ---------------------------------------------------------------------------
-  # CODEX: Claude + Codex collaboration
+  # CODEX: Claude-side compatibility bridge to Codex
   # ---------------------------------------------------------------------------
   codex:
-    name: "CodexMCP"
-    description: "Claude Code and Codex CLI collaboration"
-    description_cn: "Claude Code 与 Codex CLI 协作"
+    name: "Codex Bridge"
+    description: "Compatibility bridge for Claude-side Codex collaboration"
+    description_cn: "Claude 侧的 Codex 兼容桥接"
     cost_tier: free
     requires:
       - "Codex CLI installed"
@@ -227,8 +227,8 @@ servers:
       - "uv package manager"
 
   codex:
-    name: "CodexMCP"
-    description: "Claude Code + Codex collaboration"
+    name: "Codex Bridge"
+    description: "Compatibility bridge for Claude-side Codex collaboration"
     transport: stdio
     command: uvx
     args:

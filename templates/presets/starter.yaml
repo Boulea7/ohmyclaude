@@ -52,7 +52,7 @@ hooks:
       timeout: 5000
       description: Show current Git branch
 
-# CodexMCP integration
+# Codex compatibility hints in generated templates
 include_codex: false
 
 # Skills (not included in starter)
