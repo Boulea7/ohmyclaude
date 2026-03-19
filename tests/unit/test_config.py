@@ -190,9 +190,10 @@ class TestConfigEngineIntegration:
         )
 
         assert len(content) > 1000  # Full template should be substantial
-        # Check for CodexMCP section if include_codex is True
+        assert "Codex Aware，但不是 Codex First" in content
+        # Check for bridge guidance if include_codex is True
         if preset.include_codex:
-            assert "CodexMCP" in content or "Codex" in content
+            assert "这不等于原生 Codex 安装器" in content
 
     def test_all_presets_generate_valid_settings(self, config_engine: ConfigEngine):
         """Test that all presets generate valid settings."""

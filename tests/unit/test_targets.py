@@ -61,6 +61,18 @@ class TestHarnessBundleBuilder:
         assert "~/.claude" not in gemini_hooks.content
         assert "${extensionPath}" in gemini_hooks.content
 
+    def test_render_codex_command_uses_bridge_wording(self) -> None:
+        """Generated Codex commands should use bridge wording instead of legacy branding."""
+        builder = HarnessBundleBuilder()
+
+        bundle = builder.render_bundle(HarnessTarget.CLAUDE_HOME, "full")
+        codex_command = next(
+            file for file in bundle.files if file.relative_path == "commands/codex.md"
+        )
+
+        assert "Claude-side compatibility wrapper" in codex_command.content
+        assert "CodexMCP" not in codex_command.content
+
     def test_install_bundle_writes_files(self, tmp_path: Path) -> None:
         """Installing a bundle should write all rendered files to the explicit destination."""
         builder = HarnessBundleBuilder()
