@@ -1,77 +1,52 @@
 # Changelog
 
-All notable changes to OhMyClaude will be documented in this file.
+All notable changes to OhMyClaude are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Changed
+
+- Repositioned the repository as **Claude-first, Codex-aware**
+- Rewrote public README content around current product boundaries
+- Simplified public template wording to better match current Claude / Codex terminology
+- Clarified the separation between public repository content and local AI-private material
+- Upgraded the product direction to **Claude-first, multi-harness, local-safe**
+- Made Codex auth sync explicit via opt-in `--sync-codex-auth`
+
+### Added
+
+- English default `README.md`
+- `README.zh-CN.md`
+- `README.zh-TW.md`
+- `README.ja.md`
+- Explicit bundle targets for `claude-home`, `claude-plugin`, `codex-project`, and `gemini-extension`
+- New `omc render` and `omc install` commands for destination-based output
+- New Codex project templates: `AGENTS.md`, `.codex/config.toml`, `.codex/agents/*.toml`
+- New Gemini extension templates: `gemini-extension.json`, `GEMINI.md`, TOML commands, hooks, skills, and agents
+- Portable workflow skills: `api-design`, `deep-research`, `git-workflow`, `performance`, `search-first`, `security-review`, `verification-loop`
+
+### Cleaned Up
+
+- Moved AI-private repository files out of the public tracked surface
+- Reworked public docs to remove stale or machine-specific release guidance
+- Kept conservative backups for previously evaluated cleanup candidates
 
 ## [1.0.0] - 2024-12-07
 
 ### Added
 
-#### Core Features
-- **3 Preset Configurations**: starter, standard, full - progressive feature sets for different user needs
-- **4 API Provider Support**: Official Anthropic, GLM (Zhipu AI), 88Code, DeepSeek with one-command switching
-- **Configuration Backup System**: Automatic backup before changes, restore capability, cleanup management
-- **Atomic File Operations**: Safe file writes with rollback on failure
-- **Deep Merge Algorithm**: Intelligent configuration merging for settings.json
-
-#### Claude Code Integration
-- **10 Agent Templates**: Code reviewer, debugger, test engineer, security auditor, and more
-- **7 Slash Commands**: /commit, /review, /test, /codex, /dev-docs, /strategic-planning, /update-docs
-- **Hooks System**: skill-activation, post-tool-use-tracker, tsc-check, build-checker, error-handling
-- **CodexMCP Integration**: Seamless Claude + Codex collaboration support
-
-#### CLI Commands
-- `omc setup` - Interactive configuration wizard with preset selection
-- `omc doctor` - Health check for Claude Code configuration
-- `omc switch <provider>` - Quick API provider switching
-- `omc init` - Shell environment integration
-- `omc export/import` - Configuration portability
-- `omc provider list/show/add` - Provider management
-
-#### Developer Experience
-- **CLAUDE.md Templates**: Bilingual (Chinese/English) work instructions
-- **MCP Server Packages**: Organized by category (basic, reasoning, code)
-- **Shell Integration**: Auto-sourcing environment variables for zsh/bash/fish
-
-### Technical Details
-
-#### Architecture
-- Pydantic v2 models for configuration validation
-- Jinja2 templates for dynamic content generation
-- Click-based CLI with Rich console output
-- YAML presets with inheritance support
-
-#### File Structure
-```
-~/.claude/
-├── settings.json      # Claude Code settings
-├── CLAUDE.md          # Work instructions
-├── commands/          # Slash command templates
-├── hooks/             # Hook scripts
-└── agents/            # Agent definitions
-
-~/.ohmyclaude/
-├── backups/           # Configuration backups
-├── providers.yaml     # Custom provider definitions
-└── env.sh             # Environment variables
-```
-
-### Security
-- Atomic writes prevent configuration corruption
-- Backup before destructive operations
-- Path traversal protection in installers
-- Secure credential handling via environment variables
-
----
+- preset-based Claude Code configuration installation
+- provider switching for official and third-party endpoints
+- configuration backup and restore support
+- generated `CLAUDE.md`, commands, hooks, agents, and MCP configuration
+- Click-based CLI with Rich output
 
 ## Version History
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.0.0 | 2024-12-07 | Initial release with full feature set |
-
----
-
-*OhMyClaude - Claude Code configuration made easy for Chinese developers*
+| Unreleased | 2026-03 | Multi-target bundles, explicit render/install commands, safer Codex sync defaults, and docs cleanup |
+| 1.0.0 | 2024-12-07 | Initial release |

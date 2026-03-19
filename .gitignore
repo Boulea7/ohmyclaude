@@ -5,9 +5,15 @@ claudedocs/
 ccsw/
 claude-code-infrastructure-showcase/
 
-# Documentation (for AI development assistance only)
+# AI-local notes and scratch docs
 docs/
-CLAUDE.md
+.ai-notes/
+/AGENTS.md
+/AGENTS.local.md
+/CLAUDE.md
+/CLAUDE.local.md
+/GEMINI.md
+/GEMINI.local.md
 
 # Claude Code local settings
 .claude/
@@ -19,6 +25,7 @@ __pycache__/
 *.so
 .Python
 .env
+.env.*
 .venv
 env/
 venv/
@@ -28,6 +35,9 @@ build/
 .coverage
 coverage.xml
 htmlcov/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
 
 # Node
 node_modules/
@@ -46,6 +56,8 @@ Thumbs.db
 # Secrets
 *.pem
 *.key
+*.p12
+*.pfx
 credentials*
 api_key*
 secret*

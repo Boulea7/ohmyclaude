@@ -16,20 +16,31 @@ from rich.table import Table
 from ohmyclaude import __version__
 from ohmyclaude.core import (
     CLAUDE_MD_FILE,
-    COMMANDS_DIR,
-    HOOKS_DIR,
     SETTINGS_FILE,
     BackupManager,
     ConfigEngine,
+    HarnessBundleBuilder,
+    HarnessTarget,
     Installer,
     ShellIntegration,
+    resolve_target_paths,
 )
+from ohmyclaude.core.paths import COMMANDS_DIR as DEFAULT_COMMANDS_DIR
+from ohmyclaude.core.paths import HOOKS_DIR as DEFAULT_HOOKS_DIR
+from ohmyclaude.core.paths import SKILLS_DIR as DEFAULT_SKILLS_DIR
 from ohmyclaude.core.security import ValidationError as SecurityValidationError
 from ohmyclaude.core.security import safe_tar_extract
 from ohmyclaude.ui.logo import show_logo, show_welcome
 from ohmyclaude.ui.prompts import select_preset
 
 console = Console()
+_TARGET_CHOICES = [target.value for target in HarnessTarget]
+_DOCTOR_CHOICES = ["all", *_TARGET_CHOICES]
+
+# Keep module-level path aliases for older tests and patch-based callers.
+COMMANDS_DIR = DEFAULT_COMMANDS_DIR
+HOOKS_DIR = DEFAULT_HOOKS_DIR
+SKILLS_DIR = DEFAULT_SKILLS_DIR
 
 
 @click.group()
@@ -70,7 +81,7 @@ def setup(preset: str | None, no_interactive: bool) -> None:
     Preset packages:
         starter   - Minimal configuration for beginners
         standard  - Recommended for daily development
-        full      - All features including CodexMCP
+        full      - Full Claude-first template set with Codex-aware hints
     """
     show_logo()
     show_welcome()
@@ -172,7 +183,24 @@ def _show_install_result(result: dict[str, Any]) -> None:
 
 
 @cli.command()
-def doctor() -> None:
+@click.option(
+    "--target",
+    "target_name",
+    type=click.Choice(_DOCTOR_CHOICES),
+    default=HarnessTarget.CLAUDE_HOME.value,
+    show_default=True,
+    help="Which target surface to inspect.",
+)
+@click.option(
+    "--path",
+    "target_path",
+    type=click.Path(path_type=Path),
+    help=(
+        "Explicit target root path. Defaults to ~/.claude for claude-home "
+        "and cwd for other targets."
+    ),
+)
+def doctor(target_name: str, target_path: Path | None) -> None:
     """Check configuration health status.
 
     Verifies that all Claude Code configurations are properly set up
@@ -182,53 +210,14 @@ def doctor() -> None:
     console.print("[bold]Running health check...[/]\n")
 
     checks: list[tuple[str, str, str]] = []
+    targets = (
+        list(HarnessTarget)
+        if target_name == "all"
+        else [HarnessTarget(target_name)]
+    )
 
-    # 1. Check settings.json
-    if SETTINGS_FILE.exists():
-        checks.append(("settings.json", "[green]OK[/]", str(SETTINGS_FILE)))
-    else:
-        checks.append(("settings.json", "[red]Missing[/]", "Run: omc setup"))
-
-    # 2. Check CLAUDE.md
-    if CLAUDE_MD_FILE.exists():
-        checks.append(("CLAUDE.md", "[green]OK[/]", str(CLAUDE_MD_FILE)))
-    else:
-        checks.append(("CLAUDE.md", "[yellow]Missing[/]", "Optional"))
-
-    # 3. Check Shell integration
-    shell = ShellIntegration()
-    if shell.is_installed():
-        checks.append(("Shell Integration", "[green]OK[/]", f"{shell.shell} ({shell.rc_path})"))
-    else:
-        checks.append(("Shell Integration", "[yellow]Not configured[/]", "Run: omc init"))
-
-    # 4. Check commands directory
-    if COMMANDS_DIR.exists():
-        cmd_count = len(list(COMMANDS_DIR.glob("*.md")))
-        if cmd_count > 0:
-            checks.append(("Slash Commands", "[green]OK[/]", f"{cmd_count} command(s)"))
-        else:
-            checks.append(("Slash Commands", "[yellow]Empty[/]", "No commands installed"))
-    else:
-        checks.append(("Slash Commands", "[yellow]Missing[/]", "Directory not found"))
-
-    # 5. Check hooks directory
-    if HOOKS_DIR.exists():
-        hook_count = len(list(HOOKS_DIR.glob("*")))
-        if hook_count > 0:
-            checks.append(("Hooks", "[green]OK[/]", f"{hook_count} hook(s)"))
-        else:
-            checks.append(("Hooks", "[dim]Empty[/]", "No hooks installed"))
-    else:
-        checks.append(("Hooks", "[dim]Missing[/]", "Directory not found"))
-
-    # 6. Check backups
-    backup_mgr = BackupManager()
-    backups = backup_mgr.list_backups()
-    if backups:
-        checks.append(("Backups", "[green]OK[/]", f"{len(backups)} backup(s)"))
-    else:
-        checks.append(("Backups", "[dim]None[/]", "No backups yet"))
+    for target in targets:
+        checks.extend(_build_target_checks(target, target_path))
 
     # Display results table
     table = Table(title="OhMyClaude Health Check", show_header=True, header_style="bold")
@@ -254,6 +243,168 @@ def doctor() -> None:
         )
     else:
         console.print(f"[red]{ok_count}/{total} checks passed. Run 'omc setup' to configure.[/]")
+
+
+def _build_target_checks(
+    target: HarnessTarget,
+    target_path: Path | None,
+) -> list[tuple[str, str, str]]:
+    """Build health-check rows for a target."""
+    checks: list[tuple[str, str, str]] = []
+    root = _resolve_doctor_root(target, target_path)
+    paths = resolve_target_paths(target, root)
+    label_prefix = target.value
+
+    if target == HarnessTarget.CLAUDE_HOME:
+        checks.append(
+            _check_file(
+                f"{label_prefix}: settings.json",
+                paths.settings_file,
+                "Run: omc setup",
+            )
+        )
+        checks.append(_check_file(f"{label_prefix}: CLAUDE.md", paths.context_file, "Optional"))
+        checks.append(_check_dir(f"{label_prefix}: commands", paths.commands_dir, "*.md"))
+        checks.append(_check_dir(f"{label_prefix}: hooks", paths.hooks_dir))
+        checks.append(_check_dir(f"{label_prefix}: agents", paths.agents_dir, "*.md"))
+        checks.append(_check_dir(f"{label_prefix}: skills", paths.skills_dir))
+
+        shell = ShellIntegration()
+        if shell.is_installed():
+            checks.append(
+                (
+                    f"{label_prefix}: shell integration",
+                    "[green]OK[/]",
+                    f"{shell.shell} ({shell.rc_path})",
+                )
+            )
+        else:
+            checks.append(
+                (
+                    f"{label_prefix}: shell integration",
+                    "[yellow]Not configured[/]",
+                    "Run: omc init",
+                )
+            )
+
+        backup_mgr = BackupManager()
+        backups = backup_mgr.list_backups()
+        checks.append(
+            (
+                f"{label_prefix}: backups",
+                "[green]OK[/]" if backups else "[dim]None[/]",
+                f"{len(backups)} backup(s)" if backups else "No backups yet",
+            )
+        )
+        return checks
+
+    if target == HarnessTarget.CLAUDE_PLUGIN:
+        checks.append(
+            _check_file(
+                f"{label_prefix}: plugin.json",
+                paths.metadata_file,
+                "Render or install a plugin bundle",
+            )
+        )
+        checks.append(_check_dir(f"{label_prefix}: commands", paths.commands_dir, "*.md"))
+        checks.append(_check_dir(f"{label_prefix}: hooks", paths.hooks_dir))
+        checks.append(_check_dir(f"{label_prefix}: agents", paths.agents_dir, "*.md"))
+        checks.append(_check_dir(f"{label_prefix}: skills", paths.skills_dir))
+        return checks
+
+    if target == HarnessTarget.CODEX_PROJECT:
+        checks.append(
+            _check_file(
+                f"{label_prefix}: AGENTS.md",
+                paths.context_file,
+                "Render or install a Codex project bundle",
+            )
+        )
+        checks.append(
+            _check_file(
+                f"{label_prefix}: config.toml",
+                paths.metadata_file,
+                "Render or install a Codex project bundle",
+            )
+        )
+        checks.append(_check_dir(f"{label_prefix}: role configs", paths.agents_dir, "*.toml"))
+        checks.append(_check_dir(f"{label_prefix}: skills", paths.skills_dir))
+        return checks
+
+    checks.append(
+        _check_file(
+            f"{label_prefix}: extension manifest",
+            paths.metadata_file,
+            "Render or install a Gemini extension bundle",
+        )
+    )
+    checks.append(
+        _check_file(
+            f"{label_prefix}: GEMINI.md",
+            paths.context_file,
+            "Render or install a Gemini extension bundle",
+        )
+    )
+    checks.append(_check_dir(f"{label_prefix}: commands", paths.commands_dir, "*.toml"))
+    checks.append(_check_dir(f"{label_prefix}: hooks", paths.hooks_dir))
+    checks.append(_check_dir(f"{label_prefix}: agents", paths.agents_dir, "*.md"))
+    checks.append(_check_dir(f"{label_prefix}: skills", paths.skills_dir))
+    return checks
+
+
+def _resolve_doctor_root(target: HarnessTarget, target_path: Path | None) -> Path:
+    """Resolve the root used for doctor checks."""
+    if target_path is not None:
+        return target_path
+
+    if target == HarnessTarget.CLAUDE_HOME:
+        return CLAUDE_MD_FILE.parent
+
+    return Path.cwd()
+
+
+def _uses_real_home_target(target: HarnessTarget, path: Path) -> bool:
+    """Return True when a render target points into the real harness home."""
+    resolved = path.resolve()
+    home = Path.home().resolve()
+
+    if target in (HarnessTarget.CLAUDE_HOME, HarnessTarget.CLAUDE_PLUGIN):
+        claude_home = home / ".claude"
+        return resolved == claude_home or claude_home in resolved.parents
+
+    if target == HarnessTarget.CODEX_PROJECT:
+        codex_home = home / ".codex"
+        return resolved == codex_home or codex_home in resolved.parents
+
+    gemini_home = home / ".gemini"
+    return resolved == gemini_home or gemini_home in resolved.parents
+
+
+def _check_file(
+    label: str,
+    path: Path | None,
+    missing_hint: str,
+) -> tuple[str, str, str]:
+    """Return a formatted file check row."""
+    if path is not None and path.exists():
+        return (label, "[green]OK[/]", str(path))
+    return (label, "[yellow]Missing[/]", missing_hint)
+
+
+def _check_dir(
+    label: str,
+    path: Path | None,
+    pattern: str = "*",
+) -> tuple[str, str, str]:
+    """Return a formatted directory check row."""
+    if path is None or not path.exists():
+        return (label, "[yellow]Missing[/]", "Directory not found")
+
+    count = len(list(path.glob(pattern)))
+    if count > 0:
+        return (label, "[green]OK[/]", f"{count} item(s)")
+
+    return (label, "[dim]Empty[/]", "No files found")
 
 
 @cli.command()
@@ -319,12 +470,22 @@ def init(remove: bool, status: bool) -> None:
 @click.argument("provider", required=False)
 @click.option("--token", "-t", help="API Token (overrides environment variable).")
 @click.option("--base-url", "-u", help="API Base URL for custom providers.")
-@click.option("--skip-codex", is_flag=True, help="Skip Codex configuration update.")
+@click.option(
+    "--sync-codex-auth",
+    is_flag=True,
+    help="Explicitly sync Codex auth.json when the provider exposes an OpenAI-compatible endpoint.",
+)
+@click.option(
+    "--skip-codex",
+    is_flag=True,
+    help="Deprecated compatibility flag. Codex sync is disabled by default.",
+)
 @click.option("--list", "-l", "list_all", is_flag=True, help="List available providers.")
 def switch(
     provider: str | None,
     token: str | None,
     base_url: str | None,
+    sync_codex_auth: bool,
     skip_codex: bool,
     list_all: bool
 ) -> None:
@@ -382,11 +543,15 @@ def switch(
 
     # Execute switch
     try:
+        if sync_codex_auth and skip_codex:
+            console.print("[red]Use either --sync-codex-auth or --skip-codex, not both.[/]")
+            raise SystemExit(1)
+
         result = switcher.switch(
             provider_name=provider,
             token=token,
             base_url=base_url,
-            skip_codex=skip_codex,
+            skip_codex=not sync_codex_auth,
         )
 
         if not result.success:
@@ -402,6 +567,8 @@ def switch(
             console.print("[dim]  Codex auth.json updated[/]")
             if result.codex_backup:
                 console.print(f"[dim]  Codex backed up: {result.codex_backup}[/]")
+        elif not sync_codex_auth:
+            console.print("[dim]  Codex auth.json not touched (use --sync-codex-auth to opt in)[/]")
 
         console.print(
             "\n[yellow]Please restart Claude Code or open a new terminal "
@@ -553,6 +720,124 @@ def provider_remove(name: str) -> None:
     else:
         console.print(f"[red]Failed to remove provider '{name}'.[/]")
         raise SystemExit(1)
+
+
+@cli.command("render")
+@click.option(
+    "--target",
+    "target_name",
+    type=click.Choice(_TARGET_CHOICES),
+    required=True,
+    help="Target bundle type to render.",
+)
+@click.option(
+    "--preset",
+    "-p",
+    type=click.Choice(["starter", "standard", "full"]),
+    default="standard",
+    show_default=True,
+    help="Preset used to render the bundle.",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(path_type=Path),
+    required=True,
+    help="Directory where rendered files will be written.",
+)
+def render_bundle(target_name: str, preset: str, output: Path) -> None:
+    """Render a target bundle into an explicit output directory."""
+    target = HarnessTarget(target_name)
+    if _uses_real_home_target(target, output):
+        console.print(
+            "[red]Refusing to render into a real harness home directory.[/]"
+        )
+        console.print(
+            "[dim]Use a temporary output path, or use `omc install --confirm` "
+            "for an explicit live destination.[/]"
+        )
+        raise SystemExit(1)
+
+    builder = HarnessBundleBuilder()
+    bundle = builder.render_bundle(target, preset)
+    result = builder.install_bundle(bundle, output)
+
+    console.print(f"[green]Rendered {target.value} bundle to: {result.destination}[/]")
+    console.print(f"[dim]Files written: {result.written_files}[/]")
+
+
+@cli.command("install")
+@click.option(
+    "--target",
+    "target_name",
+    type=click.Choice(_TARGET_CHOICES),
+    required=True,
+    help="Target bundle type to install.",
+)
+@click.option(
+    "--preset",
+    "-p",
+    type=click.Choice(["starter", "standard", "full"]),
+    default="standard",
+    show_default=True,
+    help="Preset used to build the installation bundle.",
+)
+@click.option(
+    "--dest",
+    type=click.Path(path_type=Path),
+    required=True,
+    help="Explicit destination root. OhMyClaude never infers real user home targets here.",
+)
+@click.option(
+    "--confirm",
+    is_flag=True,
+    help="Required safety flag acknowledging the explicit destination write.",
+)
+@click.option(
+    "--backup",
+    is_flag=True,
+    help="Back up existing managed files before writing.",
+)
+@click.option(
+    "--restore-on-failure",
+    is_flag=True,
+    help="Attempt to restore backed-up files if installation fails.",
+)
+def install_bundle(
+    target_name: str,
+    preset: str,
+    dest: Path,
+    confirm: bool,
+    backup: bool,
+    restore_on_failure: bool,
+) -> None:
+    """Install a rendered bundle into an explicit destination."""
+    if not confirm:
+        console.print("[red]Refusing to install without --confirm.[/]")
+        console.print(
+            "[dim]Use `omc render` first if you want to inspect the output "
+            "before installing.[/]"
+        )
+        raise SystemExit(1)
+
+    target = HarnessTarget(target_name)
+    builder = HarnessBundleBuilder()
+    bundle = builder.render_bundle(target, preset)
+    try:
+        result = builder.install_bundle(
+            bundle,
+            dest,
+            backup=backup,
+            restore_on_failure=restore_on_failure,
+        )
+    except Exception as e:
+        console.print(f"[red]Install failed: {e}[/]")
+        raise SystemExit(1)
+
+    console.print(f"[green]Installed {target.value} bundle to: {result.destination}[/]")
+    console.print(f"[dim]Files written: {result.written_files}[/]")
+    if result.backup_path is not None:
+        console.print(f"[dim]Backup created: {result.backup_path}[/]")
 
 
 @cli.command("export")

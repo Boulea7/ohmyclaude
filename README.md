@@ -2,41 +2,95 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-157%20passed-brightgreen)]()
-[![Coverage](https://img.shields.io/badge/coverage-53%25-yellow)]()
+![CLI](https://img.shields.io/badge/interface-CLI-black)
+![Claude First](https://img.shields.io/badge/focus-Claude%20First-6f42c1)
+![Codex Aware](https://img.shields.io/badge/focus-Codex%20Aware-0a7ea4)
+![Local Safe](https://img.shields.io/badge/testing-local%20safe-2ea44f)
 
-**Claude Code 一键配置工具** - One-click configuration tool for Claude Code.
+**Language:** English | [简体中文](README.zh-CN.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
 
-帮助中国开发者快速配置 Claude Code，支持多种 API 提供商切换。
+**A local-safe multi-harness workflow CLI with Claude-first defaults.**
 
----
+OhMyClaude helps you bootstrap a practical Claude Code setup on your machine: generate `settings.json`, generate `CLAUDE.md`, install commands / hooks / agents / skills templates, switch providers, initialize shell integration, and keep backups around configuration changes.
 
-## Features
+The project now has a staged scope:
 
-- **3 预设配置**: starter / standard / full - 渐进式功能集
-- **4 API 提供商**: Official / GLM / 88Code / DeepSeek 一键切换
-- **10 代理模板**: code-reviewer, debugger, test-engineer 等专业代理
-- **7 斜杠命令**: /commit, /review, /test, /codex 等开发命令
-- **配置备份**: 自动备份、恢复、清理管理
-- **CodexMCP 集成**: Claude + Codex 无缝协作
+- **Claude-first**: the default install path is still Claude Code
+- **Multi-harness**: OhMyClaude can now render and explicitly install bundle outputs for Claude plugin, Codex project assets, and Gemini extensions
+- **Local-safe**: repository development and tests should not mutate your real `~/.claude`, `~/.codex`, or Gemini CLI configuration
 
----
+## Why OhMyClaude
+
+Many Claude Code repositories fall into one of two extremes:
+
+- they are too small to be reusable beyond a few copy-paste snippets
+- or they grow into a broad multi-harness framework whose code and public docs drift apart
+
+OhMyClaude aims for the middle:
+
+- a focused Python CLI for installing a coherent Claude workflow
+- enough templates to be useful out of the box
+- clear separation between **public repository content** and **private local AI working notes**
+
+## Highlights
+
+| Area | What You Get |
+|------|--------------|
+| Claude setup | Generate `~/.claude/settings.json`, `~/.claude/CLAUDE.md`, commands, hooks, agents, and skills |
+| Multi-harness bundles | Render or install `.claude-plugin/`, `.codex/`, `.agents/skills/`, and Gemini extension bundles to explicit destinations |
+| Workflow assets | Install `7` commands, `10` agents, `12` skills, and `8` hook script templates |
+| MCP bundles | Compose MCP groups from `templates/mcp/mcp_packages.yaml` |
+| Provider switching | Switch official, third-party, and custom providers with backup support and explicit Codex auth opt-in |
+| Shell integration | Add or remove shell initialization blocks via `omc init` |
+| Config safety | `doctor`, `render`, `install`, `export`, `import`, backup, restore, and rollback-friendly writes |
+| Codex and Gemini awareness | Distinguish Claude-side Codex bridge usage from native Codex concepts and Gemini extension outputs |
+
+## What It Does Today
+
+Current implemented capabilities:
+
+- install Claude Code configuration and templates
+- generate `mcpServers` and hooks from presets
+- install commands / hooks / agents / skills templates
+- render explicit target bundles for `claude-home`, `claude-plugin`, `codex-project`, and `gemini-extension`
+- manage API providers
+- optionally update OpenAI-compatible Codex auth settings only when explicitly requested
+- run health checks, shell initialization, export/import, and version checks
+
+## What It Does Not Do
+
+Current non-goals:
+
+- it is **not** a hosted plugin marketplace or registry service
+- it does **not** auto-register rendered bundles with Claude Code or Gemini CLI for you
+- it does **not** implicitly rewrite your real `~/.codex` or `~/.gemini` during repository maintenance
+- it does **not** manage Gemini CLI global settings.json merging in this phase
+
+## Safety Model
+
+If you are developing or maintaining this repository locally and do not want accidental tool configuration changes:
+
+- use `omc switch <provider>` when testing provider changes; Codex auth sync is now opt-in via `--sync-codex-auth`
+- rely on the repository test suite, which patches paths into temp directories
+- do not manually smoke test against your real `~/.claude`, `~/.codex`, or Gemini directories
+- prefer `omc render` and explicit `omc install --dest ... --confirm` into temporary locations
+- `omc render` refuses paths inside your real harness home directories by design
 
 ## Installation
 
-### pip (推荐)
+### `pip`
 
 ```bash
 pip install ohmyclaude
 ```
 
-### pipx (隔离环境)
+### `pipx`
 
 ```bash
 pipx install ohmyclaude
 ```
 
-### 从源码安装
+### From Source
 
 ```bash
 git clone https://github.com/Boulea7/ohmyclaude.git
@@ -44,211 +98,174 @@ cd ohmyclaude
 pip install -e .
 ```
 
----
-
 ## Quick Start
 
-两个命令均可使用：`omc` (简写) 和 `ohmyclaude`
-
 ```bash
-# 1. 运行配置向导
-omc setup
+# 1. Install a preset
+omc setup --preset standard
 
-# 2. 检查配置状态
+# 2. Render a Codex project bundle without touching your real home directory
+omc render --target codex-project --output ./.tmp/codex-project
+
+# 3. Install a Gemini extension bundle into an explicit destination
+omc install --target gemini-extension --preset standard --dest ./.tmp/gemini-extension --confirm
+
+# 4. Check Claude configuration status
 omc doctor
 
-# 3. 切换 API 提供商
+# 5. Check shell integration status
+omc init --status
+
+# 6. Switch provider without touching Codex auth
 omc switch glm
-
-# 4. 初始化 Shell 环境
-omc init
 ```
-
----
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `omc setup` | 运行交互式配置向导 |
-| `omc setup -p full` | 直接安装 full 预设 |
-| `omc doctor` | 检查配置健康状态 |
-| `omc switch <provider>` | 切换 API 提供商 |
-| `omc switch --list` | 列出所有可用提供商 |
-| `omc init` | 配置 Shell 环境 |
-| `omc init --status` | 查看 Shell 集成状态 |
-| `omc export <file>` | 导出配置 |
-| `omc import <file>` | 导入配置 |
-| `omc provider list` | 列出提供商 |
-| `omc provider add` | 添加自定义提供商 |
+| Command | Purpose |
+|---------|---------|
+| `omc setup` | Install the `starter`, `standard`, or `full` preset |
+| `omc doctor` | Inspect a target surface such as Claude home, plugin bundle, Codex project bundle, or Gemini extension bundle |
+| `omc init` | Add or remove shell initialization blocks |
+| `omc render --target <target>` | Render a target bundle into an explicit output directory |
+| `omc install --target <target>` | Install a target bundle into an explicit destination with confirmation |
+| `omc switch <provider>` | Switch API provider |
+| `omc switch --list` | List available providers |
+| `omc provider list/show/add/remove` | Manage custom providers |
+| `omc export <file>` | Export current Claude configuration |
+| `omc import <file>` | Restore configuration from an archive |
+| `omc update` | Check for package updates |
 
----
+## Preset Comparison
 
-## Presets
+| Preset | Positioning | Current Shape |
+|--------|-------------|---------------|
+| `starter` | smallest useful setup | `basic` MCP, 3 commands, 2 agents, no skill install |
+| `standard` | recommended daily workflow | `basic + reasoning + code + codex`, 4 commands, 5 agents, inline hooks |
+| `full` | most complete Claude asset set | 7 base MCP groups, 3 optional MCP groups, 7 commands, 10 agents, 12 skills, 8 hook scripts |
 
-| Preset | 描述 | Token 开销 | 适用场景 |
-|--------|------|-----------|---------|
-| **starter** | 最小化配置 | ~3,300 (~2%) | 入门用户 |
-| **standard** | 推荐配置 | ~5,500 (~3.5%) | 日常开发 |
-| **full** | 完整功能 | ~8,800 (~6%) | 高级用户 |
+Notes:
 
-### Preset 功能对比
+- this table describes the default `claude-home` install surface
+- the `codex` preset entry is a **Claude-side bridge path**
+- it is not the same thing as native Codex project instructions, native Codex skills, or `.codex/config.toml`
+- public wording in this repository now follows modern Claude / Codex terminology more closely, but runtime behavior is still defined by the current codebase
 
-| Feature | starter | standard | full |
-|---------|:-------:|:--------:|:----:|
-| CLAUDE.md 模板 | basic | standard | full |
-| MCP 服务器 | basic | basic + reasoning | all |
-| 斜杠命令 | 3 | 5 | 7 |
-| 代理模板 | 0 | 5 | 10 |
-| Hooks | basic | standard | full |
-| CodexMCP | - | - | ✓ |
+## Targets
 
----
+Current explicit output targets:
 
-## API Providers
+| Target | Output Shape | Typical Use |
+|--------|--------------|-------------|
+| `claude-home` | `settings.json`, `CLAUDE.md`, `commands/`, `hooks/`, `agents/`, `skills/` | Install into a temp Claude directory or an explicit `~/.claude` replacement |
+| `claude-plugin` | `.claude-plugin/plugin.json` plus `commands/`, `hooks/`, `agents/`, `skills/` | Package a shareable Claude plugin bundle |
+| `codex-project` | `AGENTS.md`, `.codex/config.toml`, `.codex/agents/`, `.agents/skills/` | Seed a project-local native Codex layer |
+| `gemini-extension` | `gemini-extension.json`, `GEMINI.md`, `commands/`, `hooks/`, `agents/`, `skills/` | Create a Gemini CLI extension bundle |
 
-| Provider | 描述 | Token 环境变量 |
-|----------|------|---------------|
-| `official` | Anthropic 官方 API | `ANTHROPIC_AUTH_TOKEN` |
-| `glm` | 智谱 AI (国内优化) | `GLM_ANTHROPIC_AUTH_TOKEN` |
-| `88code` | 第三方代理 | `CODE88_ANTHROPIC_AUTH_TOKEN` |
-| `deepseek` | DeepSeek V3 (高性价比) | `DEEPSEEK_API_KEY` |
+For non-default locations, pass `omc doctor --target <target> --path <root>` so
+the CLI inspects the intended bundle root instead of falling back to `cwd` or
+`~/.claude`.
 
-### 切换示例
+Portable plugin and Gemini hooks are currently a self-contained subset of the
+full Claude home hook behavior. They avoid home-directory assumptions, but they
+do not yet mirror every `full` preset hook one-for-one.
 
-```bash
-# 切换到 GLM
-export GLM_ANTHROPIC_AUTH_TOKEN="your-token"
-omc switch glm
+## Repository Layout
 
-# 切换回官方
-omc switch official
+```text
+src/ohmyclaude/
+├── cli/            # Click CLI entrypoint
+├── core/           # install, config, provider, shell, backup
+├── models/         # Pydantic models
+├── modules/        # MCP and provider definitions
+├── templates/      # CLAUDE.md / commands / hooks / agents / skills templates
+└── ui/             # Rich-based CLI presentation helpers
 
-# 添加自定义提供商
-omc provider add myvendor \
-  --base-url https://api.example.com/v1 \
-  --token-env MY_TOKEN
+templates/
+├── presets/        # starter / standard / full YAML
+└── mcp/            # MCP package registry
+
+tests/
+├── unit/
+└── integration/
 ```
 
----
+## Public vs Local Docs
 
-## File Structure
+This repository intentionally separates **public GitHub content** from **private local AI working material**.
 
-安装后创建的文件结构：
+### Public
 
-```
-~/.claude/
-├── settings.json      # Claude Code 设置
-├── CLAUDE.md          # 工作指令
-├── commands/          # 斜杠命令模板
-├── hooks/             # Hook 脚本
-└── agents/            # 代理定义
+The public surface of the repository should primarily be:
 
-~/.ohmyclaude/
-├── backups/           # 配置备份
-├── providers.yaml     # 自定义提供商
-└── env.sh             # 环境变量
-```
+- `README.md`
+- `README.zh-CN.md`
+- `README.zh-TW.md`
+- `README.ja.md`
+- `src/`
+- `templates/`
+- `tests/`
+- root public docs such as `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`, and `RELEASE_GUIDE.md`
 
----
+### Local
+
+Private local material should stay in ignored paths such as:
+
+- `.ai-notes/`
+- `docs/`
+- local untracked root files such as `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md`
+
+This keeps research notes, local index files, and AI-specific working context out of public Git history.
+
+In the current cleanup strategy, those root AI files are kept locally for private workflows, but removed from Git tracking.
+
+## FAQ
+
+### Does this project configure native Codex for me?
+
+It can now render or install project-scoped Codex assets to an explicit destination, but it does not auto-write your real `~/.codex` during normal repository maintenance.
+
+### Can `switch` modify my Codex configuration?
+
+Only if you explicitly opt in with `--sync-codex-auth`.
+
+### Why are local AI notes not part of the public repo?
+
+Because research notes, working indexes, and AI-facing scratch docs are useful locally but make the public repository noisier, less portable, and more privacy-sensitive.
+
+### Is this a multi-harness configuration platform?
+
+Yes, in a staged way. The current phase focuses on explicit bundle rendering and destination-based installation, not on implicit home-directory mutation across every harness.
 
 ## Development
 
-### 运行测试
-
 ```bash
-# 安装开发依赖
+# Install development dependencies
 pip install -e ".[dev]"
 
-# 运行测试
-pytest tests/ -v
+# Ruff
+ruff check .
 
-# 运行测试 + 覆盖率
-pytest tests/ -v --cov=ohmyclaude --cov-report=term-missing
+# MyPy
+python -m mypy src/ohmyclaude
+
+# Pytest
+pytest
 ```
 
-### 项目结构
+## Roadmap
 
-```
-ohmyclaude/
-├── src/ohmyclaude/
-│   ├── cli/           # CLI 命令
-│   ├── core/          # 核心模块
-│   ├── models/        # Pydantic 模型
-│   ├── modules/       # MCP/Provider 模块
-│   ├── templates/     # Jinja2 模板
-│   └── ui/            # UI 组件
-├── tests/
-│   ├── unit/          # 单元测试
-│   └── integration/   # 集成测试
-└── docs/              # 文档
-```
+The most realistic next steps are:
 
----
-
-## Troubleshooting
-
-### 常见问题
-
-**Q: `omc` 命令找不到？**
-```bash
-# 确保已安装
-pip show ohmyclaude
-
-# 或添加到 PATH
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-**Q: API 切换后不生效？**
-```bash
-# 重启 Claude Code 或打开新终端
-omc doctor  # 检查状态
-```
-
-**Q: 如何恢复备份？**
-```bash
-# 查看可用备份
-ls ~/.ohmyclaude/backups/
-
-# 导入备份
-omc import ~/.ohmyclaude/backups/backup-xxx.tar.gz
-```
-
----
-
-## Documentation
-
-- [Architecture](docs/ARCHITECTURE.md) - 系统架构设计
-- [Implementation Plan](docs/IMPLEMENTATION_PLAN.md) - 实施计划
-- [PRD](docs/PRD.md) - 产品需求文档
-- [Changelog](CHANGELOG.md) - 版本更新记录
-
----
-
-## Contributing
-
-欢迎贡献代码！请参考以下步骤：
-
-1. Fork 本仓库
-2. 创建功能分支: `git checkout -b feature/amazing-feature`
-3. 提交更改: `git commit -m 'Add amazing feature'`
-4. 推送分支: `git push origin feature/amazing-feature`
-5. 提交 Pull Request
-
----
-
-## License
-
-MIT License - 详见 [LICENSE](LICENSE)
-
----
+- deepen target-specific validation for Claude plugin and Gemini extension outputs
+- expand the shared portable skill and agent set without bloating default presets
+- add more target-aware doctor checks and troubleshooting docs
+- keep the install surface explicit and local-safe as multi-harness support grows
 
 ## Acknowledgements
 
-- [SuperClaude Framework](https://github.com/SuperClaude-Org/SuperClaude_Framework) - PM Agent patterns
-- [CodexMCP](https://github.com/GuDaStudio/codexmcp) - Claude + Codex collaboration
-- [Claude Code Infrastructure Showcase](https://github.com/diet103/claude-code-infrastructure-showcase) - Production config examples
-
----
-
-*Made with love for Chinese developers using Claude Code*
+- [obra/superpowers](https://github.com/obra/superpowers) — workflow discipline, design-first thinking, skill-driven execution
+- [affaan-m/everything-claude-code](https://github.com/affaan-m/everything-claude-code) — layered rules / skills / hooks / troubleshooting organization
+- [Claude Code Docs](https://code.claude.com/docs/en) — current hooks, plugins, memory, and subagent capabilities
+- [OpenAI Codex Docs](https://developers.openai.com/codex/) — current `AGENTS.md`, skills, subagents, and config capabilities
+- [google-gemini/gemini-cli](https://github.com/google-gemini/gemini-cli) — current Gemini CLI extension, command, skill, and project context patterns

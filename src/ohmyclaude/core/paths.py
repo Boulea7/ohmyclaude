@@ -48,6 +48,9 @@ CODEX_DIR = HOME / ".codex"
 # Codex auth file
 CODEX_AUTH_FILE = CODEX_DIR / "auth.json"
 
+# Gemini CLI configuration directory
+GEMINI_DIR = HOME / ".gemini"
+
 
 def _chmod_dir(path: Path, mode: int) -> None:
     """Best-effort chmod for directories (POSIX only)."""
@@ -65,11 +68,13 @@ def ensure_claude_dirs() -> None:
     COMMANDS_DIR.mkdir(parents=True, exist_ok=True)
     HOOKS_DIR.mkdir(parents=True, exist_ok=True)
     AGENTS_DIR.mkdir(parents=True, exist_ok=True)
+    SKILLS_DIR.mkdir(parents=True, exist_ok=True)
     # Set restrictive permissions for POSIX systems
     _chmod_dir(CLAUDE_DIR, 0o700)
     _chmod_dir(COMMANDS_DIR, 0o700)
     _chmod_dir(HOOKS_DIR, 0o700)
     _chmod_dir(AGENTS_DIR, 0o700)
+    _chmod_dir(SKILLS_DIR, 0o700)
 
 
 def ensure_ohmyclaude_dirs() -> None:

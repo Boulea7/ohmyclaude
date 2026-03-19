@@ -18,14 +18,24 @@ from ohmyclaude.core.paths import (
     CLAUDE_DIR,
     CLAUDE_MD_FILE,
     COMMANDS_DIR,
+    GEMINI_DIR,
     HOOKS_DIR,
     OHMYCLAUDE_DIR,
     SETTINGS_FILE,
+    SKILLS_DIR,
     ensure_claude_dirs,
     ensure_ohmyclaude_dirs,
 )
 from ohmyclaude.core.provider import ProviderSwitcher
 from ohmyclaude.core.shell import ShellIntegration, get_shell_info
+from ohmyclaude.core.targets import (
+    HarnessBundleBuilder,
+    HarnessTarget,
+    InstallTransactionResult,
+    RenderedBundle,
+    TargetPaths,
+    resolve_target_paths,
+)
 
 __all__ = [
     # Atomic file operations
@@ -45,8 +55,10 @@ __all__ = [
     "SETTINGS_FILE",
     "COMMANDS_DIR",
     "HOOKS_DIR",
+    "SKILLS_DIR",
     "OHMYCLAUDE_DIR",
     "BACKUPS_DIR",
+    "GEMINI_DIR",
     "ensure_claude_dirs",
     "ensure_ohmyclaude_dirs",
     # Configuration engine
@@ -56,6 +68,13 @@ __all__ = [
     # Installer
     "Installer",
     "InstallResult",
+    # Bundle builder
+    "HarnessTarget",
+    "RenderedBundle",
+    "TargetPaths",
+    "InstallTransactionResult",
+    "HarnessBundleBuilder",
+    "resolve_target_paths",
     # Provider switcher
     "ProviderSwitcher",
 ]

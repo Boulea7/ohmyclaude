@@ -1,368 +1,171 @@
 # Skills
 
-Production-tested skills for Claude Code that auto-activate based on context.
+Reference skill templates for Claude Code, with optional compatibility notes for Codex-aware workflows.
 
 ---
 
-## What Are Skills?
+## What These Skills Are
 
-Skills are modular knowledge bases that Claude loads when needed. They provide:
-- Domain-specific guidelines
-- Best practices
-- Code examples
-- Anti-patterns to avoid
+These templates are **project-scoped skill assets** intended primarily for Claude Code.
 
-**Problem:** Skills don't activate automatically by default.
+They are useful for:
 
-**Solution:** This showcase includes the hooks + configuration to make them activate.
+- packaging repeatable workflow guidance
+- keeping long instructions out of a single global prompt
+- attaching examples, references, and anti-patterns to one topic
 
----
+They are **not** a guarantee of automatic activation by themselves.
 
-## Available Skills
+## What OhMyClaude Actually Ships
 
-### skill-developer (Meta-Skill)
-**Purpose:** Creating and managing Claude Code skills
+Current template groups:
 
-**Files:** 7 resource files (426 lines total)
+- `backend-dev-guidelines`
+- `frontend-dev-guidelines`
+- `route-tester`
+- `error-tracking`
+- `skill-developer`
+- `api-design`
+- `deep-research`
+- `git-workflow`
+- `performance`
+- `search-first`
+- `security-review`
+- `verification-loop`
 
-**Use when:**
-- Creating new skills
-- Understanding skill structure
-- Working with skill-rules.json
-- Debugging skill activation
+For Claude home installs, these are installed only by presets that opt into them.
 
-**Customization:** ✅ None - copy as-is
+For generated `codex-project` and `gemini-extension` bundles, OhMyClaude may also
+include a portable baseline skill set even when a preset does not list every
+skill explicitly.
 
-**[View Skill →](skill-developer/)**
+## Activation Model
 
----
+There are two different layers to keep in mind:
+
+### Native Skill Usage
+
+Modern Claude and Codex workflows both support skill-centric organization.
+
+Use skills when you want:
+
+- reusable domain guidance
+- task-specific checklists
+- structured references that are too large for a single prompt
+
+### Optional Auto-Activation Layer
+
+OhMyClaude also includes a `skill-rules.json` + hook-based auto-activation pattern in the `full` preset.
+
+This layer is:
+
+- optional
+- Claude-oriented
+- helpful for teams that want prompt/file-trigger suggestions
+
+It should be treated as a **compatibility workflow**, not the only valid way to use skills.
+
+## Available Skill Templates
+
+### skill-developer
+
+Meta-skill for creating and maintaining skills.
+
+Use it when you need to:
+
+- create a new skill
+- split a large skill into resources
+- design trigger rules
+- debug skill activation behavior
 
 ### backend-dev-guidelines
-**Purpose:** Node.js/Express/TypeScript development patterns
 
-**Files:** 12 resource files (304 lines main + resources)
+Backend conventions and examples for Node.js / Express / TypeScript style projects.
 
-**Covers:**
-- Layered architecture (Routes → Controllers → Services → Repositories)
-- BaseController pattern
-- Prisma database access
-- Sentry error tracking
-- Zod validation
-- UnifiedConfig pattern
-- Dependency injection
-- Testing strategies
+Focus areas:
 
-**Use when:**
-- Creating/modifying API routes
-- Building controllers or services
-- Database operations with Prisma
-- Setting up error tracking
-
-**Customization:** ⚠️ Update `pathPatterns` in skill-rules.json to match your backend directories
-
-**Example pathPatterns:**
-```json
-{
-  "pathPatterns": [
-    "src/api/**/*.ts",       // Single app with src/api
-    "backend/**/*.ts",       // Backend directory
-    "services/*/src/**/*.ts" // Multi-service monorepo
-  ]
-}
-```
-
-**[View Skill →](backend-dev-guidelines/)**
-
----
+- layered architecture
+- services and repositories
+- validation
+- monitoring and error handling
 
 ### frontend-dev-guidelines
-**Purpose:** React/TypeScript/MUI v7 development patterns
 
-**Files:** 11 resource files (398 lines main + resources)
+Frontend conventions and examples for React / TypeScript style projects.
 
-**Covers:**
-- Modern React patterns (Suspense, lazy loading)
-- useSuspenseQuery for data fetching
-- MUI v7 styling (Grid with `size={{}}` prop)
-- TanStack Router
-- File organization (features/ pattern)
-- Performance optimization
-- TypeScript best practices
+Focus areas:
 
-**Use when:**
-- Creating React components
-- Fetching data with TanStack Query
-- Styling with MUI v7
-- Setting up routing
-
-**Customization:** ⚠️ Update `pathPatterns` + verify you use React/MUI
-
-**Example pathPatterns:**
-```json
-{
-  "pathPatterns": [
-    "src/**/*.tsx",          // Single React app
-    "frontend/src/**/*.tsx", // Frontend directory
-    "apps/web/**/*.tsx"      // Monorepo web app
-  ]
-}
-```
-
-**Note:** This skill is configured as a **guardrail** (enforcement: "block") to prevent MUI v6→v7 incompatibilities.
-
-**[View Skill →](frontend-dev-guidelines/)**
-
----
+- component structure
+- routing and data fetching
+- file organization
+- performance and loading states
 
 ### route-tester
-**Purpose:** Testing authenticated API routes with JWT cookie auth
 
-**Files:** 1 main file (389 lines)
+Task-focused testing guidance for authenticated API routes.
 
-**Covers:**
-- JWT cookie-based authentication testing
-- test-auth-route.js script patterns
-- cURL with cookie authentication
-- Debugging auth issues
-- Testing POST/PUT/DELETE operations
+Best suited for:
 
-**Use when:**
-- Testing API endpoints
-- Debugging authentication
-- Validating route functionality
-
-**Customization:** ⚠️ Requires JWT cookie auth setup
-
-**Ask first:** "Do you use JWT cookie-based authentication?"
-- If YES: Copy and customize service URLs
-- If NO: Skip or adapt for your auth method
-
-**[View Skill →](route-tester/)**
-
----
+- debugging route behavior
+- validating auth-protected endpoints
+- producing reproducible curl-based checks
 
 ### error-tracking
-**Purpose:** Sentry error tracking and monitoring patterns
 
-**Files:** 1 main file (~250 lines)
+Sentry-oriented error tracking patterns.
 
-**Covers:**
-- Sentry v8 initialization
-- Error capture patterns
-- Breadcrumbs and user context
-- Performance monitoring
-- Integration with Express and React
+Best suited for:
 
-**Use when:**
-- Setting up error tracking
-- Capturing exceptions
-- Adding error context
-- Debugging production issues
+- adding monitoring
+- improving exception context
+- wiring observability into backend or frontend code
 
-**Customization:** ⚠️ Update `pathPatterns` for your backend
+## How To Use Them In A Project
 
-**[View Skill →](error-tracking/)**
+### Claude Code
 
----
+Copy the selected skill directory into `.claude/skills/`.
 
-## How to Add a Skill to Your Project
+If you also want auto-activation:
 
-### Quick Integration
+1. copy `skill-rules.json`
+2. copy the matching hook scripts
+3. customize path and intent triggers for the project
 
-**For Claude Code:**
-```
-User: "Add the backend-dev-guidelines skill to my project"
+### Codex
 
-Claude should:
-1. Ask about project structure
-2. Copy skill directory
-3. Update skill-rules.json with their paths
-4. Verify integration
-```
+For generated Codex project bundles, OhMyClaude installs portable skills into `.agents/skills/`.
 
-See [CLAUDE_INTEGRATION_GUIDE.md](../../CLAUDE_INTEGRATION_GUIDE.md) for complete instructions.
+Keep in mind:
 
-### Manual Integration
+- the skill content is portable
+- Claude hook-based trigger rules are still Claude-specific
+- Codex-native discovery should come from `.agents/skills/` and `AGENTS.md`
 
-**Step 1: Copy the skill directory**
-```bash
-cp -r claude-code-infrastructure-showcase/.claude/skills/backend-dev-guidelines \\
-      your-project/.claude/skills/
-```
+### Gemini CLI
 
-**Step 2: Update skill-rules.json**
+For generated Gemini extension bundles, OhMyClaude copies the same portable skill directories into `skills/`.
 
-If you don't have one, create it:
-```bash
-cp claude-code-infrastructure-showcase/.claude/skills/skill-rules.json \\
-   your-project/.claude/skills/
-```
+Keep in mind:
 
-Then customize the `pathPatterns` for your project:
-```json
-{
-  "skills": {
-    "backend-dev-guidelines": {
-      "fileTriggers": {
-        "pathPatterns": [
-          "YOUR_BACKEND_PATH/**/*.ts"  // ← Update this!
-        ]
-      }
-    }
-  }
-}
-```
+- Gemini extension packaging is explicit and destination-based
+- skill portability is high, but hook and command behavior still differs by harness
 
-**Step 3: Test**
-- Edit a file in your backend directory
-- The skill should activate automatically
+## Customization Advice
 
----
+Customize before shipping these templates into another project:
 
-## skill-rules.json Configuration
+- update path patterns
+- remove stack-specific assumptions
+- check example imports and framework references
+- keep only the skills that match the target repository
 
-### What It Does
+## Repository Notes
 
-Defines when skills should activate based on:
-- **Keywords** in user prompts ("backend", "API", "route")
-- **Intent patterns** (regex matching user intent)
-- **File path patterns** (editing backend files)
-- **Content patterns** (code contains Prisma queries)
+This README describes the **template assets inside OhMyClaude**.
 
-### Configuration Format
+It does not mean:
 
-```json
-{
-  "skill-name": {
-    "type": "domain" | "guardrail",
-    "enforcement": "suggest" | "block",
-    "priority": "high" | "medium" | "low",
-    "promptTriggers": {
-      "keywords": ["list", "of", "keywords"],
-      "intentPatterns": ["regex patterns"]
-    },
-    "fileTriggers": {
-      "pathPatterns": ["path/to/files/**/*.ts"],
-      "contentPatterns": ["import.*Prisma"]
-    }
-  }
-}
-```
-
-### Enforcement Levels
-
-- **suggest**: Skill appears as suggestion, doesn't block
-- **block**: Must use skill before proceeding (guardrail)
-
-**Use "block" for:**
-- Preventing breaking changes (MUI v6→v7)
-- Critical database operations
-- Security-sensitive code
-
-**Use "suggest" for:**
-- General best practices
-- Domain guidance
-- Code organization
-
----
-
-## Creating Your Own Skills
-
-See the **skill-developer** skill for complete guide on:
-- Skill YAML frontmatter structure
-- Resource file organization
-- Trigger pattern design
-- Testing skill activation
-
-**Quick template:**
-```markdown
----
-name: my-skill
-description: What this skill does
----
-
-# My Skill Title
-
-## Purpose
-[Why this skill exists]
-
-## When to Use This Skill
-[Auto-activation scenarios]
-
-## Quick Reference
-[Key patterns and examples]
-
-## Resource Files
-- [topic-1.md](resources/topic-1.md)
-- [topic-2.md](resources/topic-2.md)
-```
-
----
-
-## Troubleshooting
-
-### Skill isn't activating
-
-**Check:**
-1. Is skill directory in `.claude/skills/`?
-2. Is skill listed in `skill-rules.json`?
-3. Do `pathPatterns` match your files?
-4. Are hooks installed and working?
-5. Is settings.json configured correctly?
-
-**Debug:**
-```bash
-# Check skill exists
-ls -la .claude/skills/
-
-# Validate skill-rules.json
-cat .claude/skills/skill-rules.json | jq .
-
-# Check hooks are executable
-ls -la .claude/hooks/*.sh
-
-# Test hook manually
-./.claude/hooks/skill-activation-prompt.sh
-```
-
-### Skill activates too often
-
-Update skill-rules.json:
-- Make keywords more specific
-- Narrow `pathPatterns`
-- Increase specificity of `intentPatterns`
-
-### Skill never activates
-
-Update skill-rules.json:
-- Add more keywords
-- Broaden `pathPatterns`
-- Add more `intentPatterns`
-
----
-
-## For Claude Code
-
-**When integrating a skill for a user:**
-
-1. **Read [CLAUDE_INTEGRATION_GUIDE.md](../../CLAUDE_INTEGRATION_GUIDE.md)** first
-2. Ask about their project structure
-3. Customize `pathPatterns` in skill-rules.json
-4. Verify the skill file has no hardcoded paths
-5. Test activation after integration
-
-**Common mistakes:**
-- Keeping example paths (blog-api/, frontend/)
-- Not asking about monorepo vs single-app
-- Copying skill-rules.json without customization
-
----
-
-## Next Steps
-
-1. **Start simple:** Add one skill that matches your work
-2. **Verify activation:** Edit a relevant file, skill should suggest
-3. **Add more:** Once first skill works, add others
-4. **Customize:** Adjust triggers based on your workflow
-
-**Questions?** See [CLAUDE_INTEGRATION_GUIDE.md](../../CLAUDE_INTEGRATION_GUIDE.md) for comprehensive integration instructions.
+- OhMyClaude is a universal skill installer
+- all skills auto-activate by default
+- the same activation mechanism works unchanged across Claude Code and Codex

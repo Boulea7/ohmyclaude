@@ -14,7 +14,7 @@ version: "1.0.0"
 model: sonnet
 always_thinking_enabled: true
 
-# CLAUDE.md template selection (includes SuperClaude + CodexMCP)
+# CLAUDE.md template selection (full guidance for Claude-first workflows)
 claude_md_template: full  # Can be: general, standard, full, frontend, backend, ml
 
 # MCP packages to install
@@ -25,7 +25,7 @@ mcp_packages:
   - reasoning   # sequential-thinking (FREE)
   - browser     # playwright + chrome-devtools (FREE)
   - code        # serena - semantic code understanding (FREE)
-  - codex       # CodexMCP - Claude + Codex collaboration (FREE)
+  - codex       # Codex compatibility bridge for Claude workflows
   - web-free    # tavily - web search (FREE tier available)
   - diff        # unified-diff (FREE)
 
@@ -51,7 +51,7 @@ commands:
   - strategic-planning  # Strategic planning workflow
 
 # Agent templates to install
-# Includes all agents from both SuperClaude and showcase
+# Includes the full current agent template set
 agents:
   # Core agents
   - code-reviewer           # Code review specialist
@@ -60,7 +60,7 @@ agents:
   - refactor-expert         # Refactoring specialist
   - doc-writer              # Technical documentation
 
-  # Professional agents (from showcase)
+  # Extended review and planning agents
   - code-architecture-reviewer  # Architecture review
   - auto-error-resolver         # Automatic error resolution
   - web-research-specialist     # Web research and information gathering
@@ -116,10 +116,10 @@ hooks:
       timeout: 5000
       description: macOS notification
 
-# CodexMCP integration
+# Codex compatibility hints in generated templates
 include_codex: true
 
-# CodexMCP configuration
+# Codex compatibility configuration
 codex:
   enabled: true
   collaboration_protocol: true
@@ -127,13 +127,20 @@ codex:
   session_management: true
   return_all_messages: false
 
-# Skills auto-activation (from showcase)
+# Skills bundled with the full preset
 skills:
   - frontend-dev-guidelines
   - backend-dev-guidelines
   - skill-developer
   - route-tester
   - error-tracking
+  - api-design
+  - deep-research
+  - git-workflow
+  - performance
+  - search-first
+  - security-review
+  - verification-loop
 
 # Skill rules configuration
 skill_rules:

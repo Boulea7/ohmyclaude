@@ -33,6 +33,7 @@ def temp_home(tmp_path: Path) -> Generator[Path, None, None]:
     claude_dir = home / ".claude"
     ohmyclaude_dir = home / ".ohmyclaude"
     codex_dir = home / ".codex"
+    gemini_dir = home / ".gemini"
 
     # Also patch the derived paths
     with (
@@ -43,10 +44,12 @@ def temp_home(tmp_path: Path) -> Generator[Path, None, None]:
         patch("ohmyclaude.core.paths.COMMANDS_DIR", claude_dir / "commands"),
         patch("ohmyclaude.core.paths.HOOKS_DIR", claude_dir / "hooks"),
         patch("ohmyclaude.core.paths.AGENTS_DIR", claude_dir / "agents"),
+        patch("ohmyclaude.core.paths.SKILLS_DIR", claude_dir / "skills"),
         patch("ohmyclaude.core.paths.OHMYCLAUDE_DIR", ohmyclaude_dir),
         patch("ohmyclaude.core.paths.BACKUPS_DIR", ohmyclaude_dir / "backups"),
         patch("ohmyclaude.core.paths.CODEX_DIR", codex_dir),
         patch("ohmyclaude.core.paths.CODEX_AUTH_FILE", codex_dir / "auth.json"),
+        patch("ohmyclaude.core.paths.GEMINI_DIR", gemini_dir),
     ):
         yield home
 
@@ -59,6 +62,7 @@ def temp_claude_dir(temp_home: Path) -> Path:
     (claude_dir / "commands").mkdir(exist_ok=True)
     (claude_dir / "hooks").mkdir(exist_ok=True)
     (claude_dir / "agents").mkdir(exist_ok=True)
+    (claude_dir / "skills").mkdir(exist_ok=True)
     return claude_dir
 
 

@@ -24,10 +24,23 @@ class TestBackupManager:
 
         with patch("ohmyclaude.core.backup.BACKUPS_DIR", backups_dir):
             with patch("ohmyclaude.core.backup.CLAUDE_DIR", claude_dir):
-                with patch("ohmyclaude.core.backup.SETTINGS_FILE", claude_dir / "settings.json"):
-                    with patch("ohmyclaude.core.backup.COMMANDS_DIR", claude_dir / "commands"):
-                        with patch("ohmyclaude.core.backup.ensure_ohmyclaude_dirs"):
-                            yield BackupManager(backups_dir)
+                with patch("ohmyclaude.core.backup.CLAUDE_MD_FILE", claude_dir / "CLAUDE.md"):
+                    with patch(
+                        "ohmyclaude.core.backup.SETTINGS_FILE",
+                        claude_dir / "settings.json",
+                    ):
+                        with patch("ohmyclaude.core.backup.COMMANDS_DIR", claude_dir / "commands"):
+                            with patch("ohmyclaude.core.backup.HOOKS_DIR", claude_dir / "hooks"):
+                                with patch(
+                                    "ohmyclaude.core.backup.AGENTS_DIR",
+                                    claude_dir / "agents",
+                                ):
+                                    with patch(
+                                        "ohmyclaude.core.backup.SKILLS_DIR",
+                                        claude_dir / "skills",
+                                    ):
+                                        with patch("ohmyclaude.core.backup.ensure_ohmyclaude_dirs"):
+                                            yield BackupManager(backups_dir)
 
     @pytest.fixture
     def setup_config(self, tmp_path: Path):
@@ -97,15 +110,25 @@ class TestBackupManager:
 
         with patch("ohmyclaude.core.backup.BACKUPS_DIR", backups_dir):
             with patch("ohmyclaude.core.backup.CLAUDE_DIR", claude_dir):
-                with patch("ohmyclaude.core.backup.SETTINGS_FILE", settings_file):
-                    with patch("ohmyclaude.core.backup.COMMANDS_DIR", claude_dir / "commands"):
-                        with patch("ohmyclaude.core.backup.ensure_ohmyclaude_dirs"):
-                            manager = BackupManager(backups_dir)
-                            backup_path = manager.create_backup()
+                with patch("ohmyclaude.core.backup.CLAUDE_MD_FILE", claude_dir / "CLAUDE.md"):
+                    with patch("ohmyclaude.core.backup.SETTINGS_FILE", settings_file):
+                        with patch("ohmyclaude.core.backup.COMMANDS_DIR", claude_dir / "commands"):
+                            with patch("ohmyclaude.core.backup.HOOKS_DIR", claude_dir / "hooks"):
+                                with patch(
+                                    "ohmyclaude.core.backup.AGENTS_DIR",
+                                    claude_dir / "agents",
+                                ):
+                                    with patch(
+                                        "ohmyclaude.core.backup.SKILLS_DIR",
+                                        claude_dir / "skills",
+                                    ):
+                                        with patch("ohmyclaude.core.backup.ensure_ohmyclaude_dirs"):
+                                            manager = BackupManager(backups_dir)
+                                            backup_path = manager.create_backup()
 
-                            assert backup_path.exists()
-                            assert (backup_path / "settings.json").exists()
-                            assert (backup_path / "metadata.json").exists()
+                                            assert backup_path.exists()
+                                            assert (backup_path / "settings.json").exists()
+                                            assert (backup_path / "metadata.json").exists()
 
     def test_create_backup_with_tag(self, tmp_path: Path):
         """Test creating a backup with a tag."""
@@ -119,13 +142,23 @@ class TestBackupManager:
 
         with patch("ohmyclaude.core.backup.BACKUPS_DIR", backups_dir):
             with patch("ohmyclaude.core.backup.CLAUDE_DIR", claude_dir):
-                with patch("ohmyclaude.core.backup.SETTINGS_FILE", settings_file):
-                    with patch("ohmyclaude.core.backup.COMMANDS_DIR", claude_dir / "commands"):
-                        with patch("ohmyclaude.core.backup.ensure_ohmyclaude_dirs"):
-                            manager = BackupManager(backups_dir)
-                            backup_path = manager.create_backup(tag="pre-install")
+                with patch("ohmyclaude.core.backup.CLAUDE_MD_FILE", claude_dir / "CLAUDE.md"):
+                    with patch("ohmyclaude.core.backup.SETTINGS_FILE", settings_file):
+                        with patch("ohmyclaude.core.backup.COMMANDS_DIR", claude_dir / "commands"):
+                            with patch("ohmyclaude.core.backup.HOOKS_DIR", claude_dir / "hooks"):
+                                with patch(
+                                    "ohmyclaude.core.backup.AGENTS_DIR",
+                                    claude_dir / "agents",
+                                ):
+                                    with patch(
+                                        "ohmyclaude.core.backup.SKILLS_DIR",
+                                        claude_dir / "skills",
+                                    ):
+                                        with patch("ohmyclaude.core.backup.ensure_ohmyclaude_dirs"):
+                                            manager = BackupManager(backups_dir)
+                                            backup_path = manager.create_backup(tag="pre-install")
 
-                            assert "pre-install" in backup_path.name
+                                            assert "pre-install" in backup_path.name
 
     def test_create_backup_with_commands(self, tmp_path: Path):
         """Test creating backup that includes commands directory."""
@@ -143,13 +176,23 @@ class TestBackupManager:
 
         with patch("ohmyclaude.core.backup.BACKUPS_DIR", backups_dir):
             with patch("ohmyclaude.core.backup.CLAUDE_DIR", claude_dir):
-                with patch("ohmyclaude.core.backup.SETTINGS_FILE", settings_file):
-                    with patch("ohmyclaude.core.backup.COMMANDS_DIR", commands_dir):
-                        with patch("ohmyclaude.core.backup.ensure_ohmyclaude_dirs"):
-                            manager = BackupManager(backups_dir)
-                            backup_path = manager.create_backup()
+                with patch("ohmyclaude.core.backup.CLAUDE_MD_FILE", claude_dir / "CLAUDE.md"):
+                    with patch("ohmyclaude.core.backup.SETTINGS_FILE", settings_file):
+                        with patch("ohmyclaude.core.backup.COMMANDS_DIR", commands_dir):
+                            with patch("ohmyclaude.core.backup.HOOKS_DIR", claude_dir / "hooks"):
+                                with patch(
+                                    "ohmyclaude.core.backup.AGENTS_DIR",
+                                    claude_dir / "agents",
+                                ):
+                                    with patch(
+                                        "ohmyclaude.core.backup.SKILLS_DIR",
+                                        claude_dir / "skills",
+                                    ):
+                                        with patch("ohmyclaude.core.backup.ensure_ohmyclaude_dirs"):
+                                            manager = BackupManager(backups_dir)
+                                            backup_path = manager.create_backup()
 
-                            assert (backup_path / "commands" / "test.md").exists()
+                                            assert (backup_path / "commands" / "test.md").exists()
 
     def test_list_backups_empty(self, tmp_path: Path):
         """Test listing backups when none exist."""
@@ -278,19 +321,34 @@ class TestBackupManager:
 
         with patch("ohmyclaude.core.backup.BACKUPS_DIR", backups_dir):
             with patch("ohmyclaude.core.backup.CLAUDE_DIR", claude_dir):
-                with patch("ohmyclaude.core.backup.SETTINGS_FILE", claude_dir / "settings.json"):
-                    with patch("ohmyclaude.core.backup.COMMANDS_DIR", claude_dir / "commands"):
-                        with patch("ohmyclaude.core.backup.ensure_ohmyclaude_dirs"):
-                            manager = BackupManager(backups_dir)
-                            result = manager.restore_backup(
-                                "backup-20241207-120000",
-                                confirm=False
-                            )
+                with patch("ohmyclaude.core.backup.CLAUDE_MD_FILE", claude_dir / "CLAUDE.md"):
+                    with patch(
+                        "ohmyclaude.core.backup.SETTINGS_FILE",
+                        claude_dir / "settings.json",
+                    ):
+                        with patch("ohmyclaude.core.backup.COMMANDS_DIR", claude_dir / "commands"):
+                            with patch("ohmyclaude.core.backup.HOOKS_DIR", claude_dir / "hooks"):
+                                with patch(
+                                    "ohmyclaude.core.backup.AGENTS_DIR",
+                                    claude_dir / "agents",
+                                ):
+                                    with patch(
+                                        "ohmyclaude.core.backup.SKILLS_DIR",
+                                        claude_dir / "skills",
+                                    ):
+                                        with patch("ohmyclaude.core.backup.ensure_ohmyclaude_dirs"):
+                                            manager = BackupManager(backups_dir)
+                                            result = manager.restore_backup(
+                                                "backup-20241207-120000",
+                                                confirm=False,
+                                            )
 
-                            assert result is True
-                            restored_settings = claude_dir / "settings.json"
-                            assert restored_settings.exists()
-                            assert json.loads(restored_settings.read_text())["restored"] is True
+                                            assert result is True
+                                            restored_settings = claude_dir / "settings.json"
+                                            assert restored_settings.exists()
+                                            assert json.loads(
+                                                restored_settings.read_text()
+                                            )["restored"] is True
 
     def test_restore_backup_not_found(self, tmp_path: Path):
         """Test restore raises error for nonexistent backup."""
